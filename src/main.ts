@@ -1,3 +1,3 @@
-import AppService from "./app.service";
+import appService from './api/app.service';
 
-AppService.main();
+appService.main();
