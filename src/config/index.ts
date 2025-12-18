@@ -20,6 +20,14 @@ interface ConfigType {
     SUPERADMIN_PASSWORD: string;
     SUPER_ADMIN_PHONE_NUMBER: string;
   };
+
+  GOOGLE_AUTH: {
+    GOOGLE_CLIENT_ID: string;
+    GOOGLE_CLIENT_SECRET: string;
+    GOOGLE_CALBACK_URL: string;
+  };
+
+  FRONTEND_URL: string;
 }
 
 export const config: ConfigType = {
@@ -40,4 +48,12 @@ export const config: ConfigType = {
     SUPERADMIN_PASSWORD: String(process.env.SUPERADMIN_PASSWORD),
     SUPER_ADMIN_PHONE_NUMBER: String(process.env.SUPER_ADMIN_PHONE_NUMBER),
   },
+
+  GOOGLE_AUTH: {
+    GOOGLE_CALBACK_URL: String(process.env.GOOGLE_CALBACK_URL),
+    GOOGLE_CLIENT_ID: String(process.env.GOOGLE_CLIENT_ID),
+    GOOGLE_CLIENT_SECRET: String(process.env.GOOGLE_CLIENT_SECRET),
+  },
+
+  FRONTEND_URL: String(process.env.FRONTEND_URL),
 };

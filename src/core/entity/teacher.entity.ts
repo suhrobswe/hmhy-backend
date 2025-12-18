@@ -1,6 +1,10 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { Roles, TeacherSpecification } from 'src/common/enum/index.enum';
+import {
+  AuthProvider,
+  Roles,
+  TeacherSpecification,
+} from 'src/common/enum/index.enum';
 import { LessonTemplate } from './lessonTemplate.entity';
 import { TeacherPayment } from './teacherPayment.entity';
 import { Lesson } from './lesson.entity';
@@ -17,7 +21,7 @@ export class Teacher extends BaseEntity {
   @Column({ type: 'varchar' })
   fullName: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   password: string;
 
   @Column({ type: 'varchar', unique: true, nullable: true })
@@ -26,8 +30,18 @@ export class Teacher extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({
+    type: 'enum',
+    enum: AuthProvider,
+    default: AuthProvider.LOCAL,
+  })
+  authProvider: AuthProvider;
+
   @Column({ type: 'boolean', default: false })
   isDelete: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  isComplete: boolean;
 
   @Column({ type: 'enum', enum: Roles, default: Roles.TEACHER })
   role: Roles;

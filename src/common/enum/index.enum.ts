@@ -41,3 +41,8 @@ export enum TeacherSpecification {
   ARABIC = "ARABIC",
   KOREAN = "KOREAN",
 }
+
+export enum AuthProvider {
+  LOCAL = 'LOCAL',
+  GOOGLE = 'GOOGLE',
+}
