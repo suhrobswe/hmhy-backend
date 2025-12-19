@@ -27,30 +27,23 @@ export class AuthService {
     private readonly crypto: CryptoService,
     private readonly token: TokenService,
   ) {}
-
   async adminSignIn(dto: AdminSignInDto, res: Response): Promise<ISuccess> {
     const { username, password } = dto;
 
     const admin = await this.adminRepo.findOne({ where: { username } });
-    const isMatchPass = await this.crypto.decrypt(
-      password,
-      admin?.password ?? '',
-    );
+    if (!admin) throw new BadRequestException('Username or password incorrect');
 
-    if (!admin || !isMatchPass)
+    const isMatchPass = await this.crypto.decrypt(password, admin.password);
+    if (!isMatchPass)
       throw new BadRequestException('Username or password incorrect');
 
-    const payload: IToken = {
-      id: admin.id,
-      role: admin.role,
-    };
-
+    const payload: IToken = { id: admin.id, role: admin.role };
     const accessToken = await this.token.accessToken(payload);
     const refreshToken = await this.token.refreshToken(payload);
 
     await this.token.writeCookie(res, 'token', refreshToken, 15);
 
-    return successRes(accessToken);
+    return successRes({ accessToken });
   }
 
   async teacherSignIn(dto: TeacherSignInDto, res: Response) {

@@ -33,10 +33,5 @@ export class CreateAdminDto {
 
   @IsEnum(Roles)
   @IsOptional()
-  @ApiProperty({
-    example: Roles.ADMIN,
-    description: 'Admin role',
-    required: false,
-  })
   role?: Roles;
 }

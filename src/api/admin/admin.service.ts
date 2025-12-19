@@ -100,12 +100,10 @@ export class AdminService
     let hashPassword: string = '';
     if (password) {
       hashPassword = await this.crypto.encrypt(password);
+      dto.password = hashPassword;
     }
 
-    const updatetAdmin = await this.adminRepo.update(id, {
-      password: hashPassword,
-      ...dto,
-    });
+    const updatetAdmin = await this.adminRepo.update(id, dto);
 
     return successRes(updatetAdmin);
   }

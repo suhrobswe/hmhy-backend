@@ -6,14 +6,26 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { AuthGuard } from 'src/common/guard/auth.guard';
+import { RolesGuard } from 'src/common/guard/role.guard';
+import { Roles } from 'src/common/enum/index.enum';
+import { AccessRoles } from 'src/common/decorator/roles.decorator';
 
 @ApiTags('Admin')
 @Controller('admin')
+@ApiBearerAuth()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
@@ -39,6 +51,8 @@ export class AdminController {
     description: 'Bad request',
     schema: { example: { status: 'error', message: 'Validation failed' } },
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
   @Post()
   create(@Body() createAdminDto: CreateAdminDto) {
     return this.adminService.createAdmin(createAdminDto);
@@ -62,6 +76,8 @@ export class AdminController {
       },
     },
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
   @Get()
   findAll() {
     return this.adminService.findAll();
@@ -88,6 +104,8 @@ export class AdminController {
     description: 'Admin not found',
     schema: { example: { status: 'error', message: 'Admin not found' } },
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.adminService.findOneById(id);
@@ -115,6 +133,8 @@ export class AdminController {
     description: 'Bad request',
     schema: { example: { status: 'error', message: 'Validation failed' } },
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
     return this.adminService.updateAdmin(updateAdminDto, id);
@@ -134,6 +154,8 @@ export class AdminController {
     schema: { example: { status: 'error', message: 'Admin not found' } },
   })
   @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.adminService.delete(id);
   }
