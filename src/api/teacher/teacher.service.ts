@@ -64,39 +64,6 @@ export class TeacherService extends BaseService<
   async findTeacherByPhone(phoneNumber: string) {
     return await this.teacherRepo.findOne({ where: { phoneNumber } });
   }
-  async createIncompleteGoogleTeacher(data: {
-    email: string;
-    fullName: string;
-    imageUrl?: string;
-    googleId: string;
-  }) {
-    const existingTeacher = await this.teacherRepo.findOne({
-      where: { email: data.email },
-    });
-
-    if (existingTeacher && existingTeacher.isComplete) {
-      throw new ConflictException('Teacher with this email already exists');
-    }
-
-    if (existingTeacher && !existingTeacher.isComplete) {
-      existingTeacher.fullName = data.fullName;
-      existingTeacher.imageUrl = data.imageUrl || '';
-      existingTeacher.googleId = data.googleId;
-      return await this.teacherRepo.save(existingTeacher);
-    }
-
-    const teacher = this.teacherRepo.create({
-      email: data.email,
-      fullName: data.fullName,
-      imageUrl: data.imageUrl,
-      googleId: data.googleId,
-      isActive: false,
-      authProvider: AuthProvider.GOOGLE,
-      isComplete: false,
-    });
-
-    return await this.teacherRepo.save(teacher);
-  }
 
   async completeGoogleRegistration(
     email: string,
@@ -159,5 +126,53 @@ export class TeacherService extends BaseService<
 
   async findCompleteGoogleTeacher(email: string) {
     return await this.teacherRepo.findOne({ where: { email } });
+  }
+
+  // teacher.service.ts
+
+  async createIncompleteGoogleTeacher(data: {
+    email: string;
+    fullName: string;
+    googleId: string;
+    imageUrl?: string;
+  }) {
+    let teacher = await this.teacherRepo.findOne({
+      where: { email: data.email },
+    });
+
+    if (!teacher) {
+      teacher = this.teacherRepo.create({
+        email: data.email,
+        fullName: data.fullName,
+        googleId: data.googleId,
+        imageUrl: data.imageUrl,
+        isComplete: false,
+        isActive: false,
+        authProvider: AuthProvider.GOOGLE,
+      });
+      return await this.teacherRepo.save(teacher);
+    }
+
+    return teacher;
+  }
+
+  // Email bo'yicha topish
+  async findByEmail(email: string) {
+    return await this.teacherRepo.findOne({ where: { email } });
+  }
+
+  // Yakuniy saqlash (verify-otp dan keyin)
+  async activateTeacher(email: string, phoneNumber: string, password: string) {
+    const teacher = await this.findByEmail(email);
+    if (!teacher) throw new NotFoundException('Foydalanuvchi topilmadi');
+
+    const hashedPassword = await this.crypto.encrypt(password);
+
+    teacher.phoneNumber = phoneNumber;
+    teacher.password = hashedPassword;
+    teacher.isComplete = true;
+    teacher.isActive = false; // Admin tasdiqlashi uchun
+
+    return await this.teacherRepo.save(teacher);
   }
 }

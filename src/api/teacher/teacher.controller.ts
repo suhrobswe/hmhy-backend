@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { CompleteGoogleRegistrationDto } from './dto/google-oauth.dti';
 import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -74,52 +75,74 @@ export class TeacherController {
   }
   // teacher.controller.ts
   // teacher.controller.ts
+  // teacher.controller.ts
 
-  @ApiBearerAuth()
   @Post('google/send-otp')
-  async sendOtp(@Body() dto: SendOtpDto, @Req() req) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) throw new UnauthorizedException('Token taqdim etilmadi');
+  @ApiOperation({
+    summary: 'Google-dan so‘ng email, telefon va parol kiritish',
+  })
+  async sendOtp(@Body() body: SendOtpDto) {
+    // 1. Email bazada borligini tekshirish
+    const teacher = await this.teacherService.findByEmail(body.email);
 
-    try {
-      const token = authHeader.split(' ')[1];
-      const decoded = this.jwtService.verify(token); // XATO SHU YERDA SODIR BO'LYAPTI
-
-      // ... qolgan mantiq
-    } catch (error) {
-      // Agar token muddati o'tgan yoki noto'g'ri bo'lsa, 401 qaytaramiz
-      throw new UnauthorizedException('Token yaroqsiz yoki muddati otgan');
+    // 2. Agar email yo'q bo'lsa, qaytadan Google-dan o'tishni so'rash
+    if (!teacher) {
+      return {
+        message:
+          "Email bazada topilmadi. Avval Google orqali ro'yxatdan o'ting.",
+        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALBACK_URL, // Siz so'ragan qaytish linki
+      };
     }
+
+    // 3. Telefon band emasligini tekshirish
+    const phoneCheck = await this.teacherService.findTeacherByPhone(
+      body.phoneNumber,
+    );
+    if (phoneCheck) throw new ConflictException('Bu telefon raqami band');
+
+    // 4. OTP yaratish va Redis-ga saqlash
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await this.teacherService.saveOtpToRedis(body.phoneNumber, {
+      email: body.email,
+      password: body.password,
+      phoneNumber: body.phoneNumber,
+      otp,
+    });
+
+    return {
+      message: 'OTP telefon raqamga yuborildi',
+      otp: otp,
+      verify_link: `${config.BACKEND_URL}/teacher/google/verify-otp`,
+    };
   }
 
   @Post('google/verify-otp')
-  @ApiOperation({
-    summary: 'Step 2: OTP tasdiqlash va Registratsiyani yakunlash',
-  })
-  async verifyOtp(@Body() body: { phoneNumber: string; otp: string }) {
+  @ApiOperation({ summary: 'OTP-ni tasdiqlash va faollashtirish' })
+  async verifyOtp(@Body() body: VerifyOtpDto) {
     const data = await this.teacherService.getOtpFromRedis(body.phoneNumber);
 
     if (!data || data.otp !== body.otp) {
       throw new UnauthorizedException("OTP xato yoki muddati o'tgan");
     }
 
-    // Bazaga isActive: false holatida saqlash
-    const teacher = await this.teacherService.createFinalTeacher(data);
+    // Ma'lumotlarni bazada yangilash (isComplete: true)
+    const teacher = await this.teacherService.activateTeacher(
+      data.email,
+      data.phoneNumber,
+      data.password,
+    );
 
-    // Redis-dan o'chirish
     await this.teacherService.deleteOtpFromRedis(body.phoneNumber);
 
     return {
       message:
-        "Ro'yxatdan o'tdingiz. Akkauntingiz admin tomonidan tasdiqlangach faollashadi.",
-      teacher: {
-        id: teacher.id,
-        fullName: teacher.fullName,
-        email: teacher.email,
-        isActive: teacher.isActive,
-      },
+        "Muvaffaqiyatli ro'yxatdan o'tdingiz. Admin tasdiqlashini kuting.",
+      teacherId: teacher.id,
+      status: 'Pending Admin Approval',
     };
   }
+
   @Post('google/complete-registration')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

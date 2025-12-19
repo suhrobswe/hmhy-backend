@@ -33,6 +33,8 @@ interface ConfigType {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string;
+
+  BACKEND_URL: string;
 }
 
 export const config: ConfigType = {
@@ -66,4 +68,6 @@ export const config: ConfigType = {
   REDIS_HOST: String(process.env.REDIS_HOST),
   REDIS_PORT: Number(process.env.REDIS_PORT),
   REDIS_PASSWORD: String(process.env.REDIS_PASSWORD),
+
+  BACKEND_URL: String(process.env.BACKEND_URL),
 };
