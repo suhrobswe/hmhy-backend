@@ -8,6 +8,7 @@ import {
   UseGuards,
   UnauthorizedException,
   HttpStatus,
+  ConflictException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TeacherService } from './teacher.service';
@@ -23,6 +24,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { CompleteGoogleRegistrationDto } from './dto/google-oauth.dti';
+import { SendOtpDto } from './dto/send-otp.dto';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -31,73 +33,93 @@ export class TeacherController {
     private teacherService: TeacherService,
     private jwtService: JwtService,
   ) {}
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  @ApiOperation({
-    summary: 'Start Google OAuth login',
-    description:
-      '⚠️ BROWSER ORQALI TEST QILING! Swagger UI dan ishlamaydi. Browserda: http://localhost:4000/api/v1/teacher/google/callback',
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to Google login page',
-  })
-  async googleAuth() {
-    // Guard redirects to Google
-  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  @ApiOperation({
-    summary: 'Google OAuth callback',
-    description:
-      'Google redirects here after authentication. Not testable via Swagger.',
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to frontend with token or registration page',
-  })
   async googleCallback(@Req() req, @Res() res: Response) {
     const googleUser = req.user;
-
     try {
       const completeTeacher =
-        await this.teacherService.findCompleteGoogleTeacher(googleUser.email);
+        (await this.teacherService.findCompleteGoogleTeacher(
+          googleUser.email,
+        )) as any;
 
       if (completeTeacher) {
         const token = this.jwtService.sign({
           id: completeTeacher.id,
           email: completeTeacher.email,
         });
-
         return res.redirect(
-          `${config.FRONTEND_URL}/login/success?token=${token}`,
+          `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth?token=${token}`,
         );
       }
 
-      const incompleteTeacher =
-        await this.teacherService.createIncompleteGoogleTeacher({
+      const tempToken = this.jwtService.sign(
+        {
           email: googleUser.email,
           fullName: googleUser.fullName,
           imageUrl: googleUser.imageUrl,
           googleId: googleUser.googleId,
-        });
-
-      const tempToken = this.jwtService.sign(
-        { email: incompleteTeacher.email, type: 'google-registration' },
-        { expiresIn: '30m' },
+          type: 'google-registration',
+        },
+        { expiresIn: '15m' },
       );
 
       return res.redirect(
-        `${config.FRONTEND_URL}/register/complete?token=${tempToken}`,
+        `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth/TeacherController_completeRegistration?token=${tempToken}`,
       );
     } catch (error) {
-      return res.redirect(
-        `${config.FRONTEND_URL}/login/error?message=${error.message}`,
-      );
+      return res.status(500).json({ message: error.message });
+    }
+  }
+  // teacher.controller.ts
+  // teacher.controller.ts
+
+  @ApiBearerAuth()
+  @Post('google/send-otp')
+  async sendOtp(@Body() dto: SendOtpDto, @Req() req) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) throw new UnauthorizedException('Token taqdim etilmadi');
+
+    try {
+      const token = authHeader.split(' ')[1];
+      const decoded = this.jwtService.verify(token); // XATO SHU YERDA SODIR BO'LYAPTI
+
+      // ... qolgan mantiq
+    } catch (error) {
+      // Agar token muddati o'tgan yoki noto'g'ri bo'lsa, 401 qaytaramiz
+      throw new UnauthorizedException('Token yaroqsiz yoki muddati otgan');
     }
   }
 
+  @Post('google/verify-otp')
+  @ApiOperation({
+    summary: 'Step 2: OTP tasdiqlash va Registratsiyani yakunlash',
+  })
+  async verifyOtp(@Body() body: { phoneNumber: string; otp: string }) {
+    const data = await this.teacherService.getOtpFromRedis(body.phoneNumber);
+
+    if (!data || data.otp !== body.otp) {
+      throw new UnauthorizedException("OTP xato yoki muddati o'tgan");
+    }
+
+    // Bazaga isActive: false holatida saqlash
+    const teacher = await this.teacherService.createFinalTeacher(data);
+
+    // Redis-dan o'chirish
+    await this.teacherService.deleteOtpFromRedis(body.phoneNumber);
+
+    return {
+      message:
+        "Ro'yxatdan o'tdingiz. Akkauntingiz admin tomonidan tasdiqlangach faollashadi.",
+      teacher: {
+        id: teacher.id,
+        fullName: teacher.fullName,
+        email: teacher.email,
+        isActive: teacher.isActive,
+      },
+    };
+  }
   @Post('google/complete-registration')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

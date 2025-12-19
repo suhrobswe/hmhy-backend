@@ -29,6 +29,10 @@ interface ConfigType {
 
   FRONTEND_URL: string;
   SWAGGER_URL: string;
+
+  REDIS_HOST: string;
+  REDIS_PORT: number;
+  REDIS_PASSWORD: string;
 }
 
 export const config: ConfigType = {
@@ -58,4 +62,8 @@ export const config: ConfigType = {
 
   FRONTEND_URL: String(process.env.FRONTEND_URL),
   SWAGGER_URL: String(process.env.SWAGGER_URL),
+
+  REDIS_HOST: String(process.env.REDIS_HOST),
+  REDIS_PORT: Number(process.env.REDIS_PORT),
+  REDIS_PASSWORD: String(process.env.REDIS_PASSWORD),
 };

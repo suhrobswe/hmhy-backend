@@ -6,6 +6,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { JwtModule } from '@nestjs/jwt';
+import { RedisModule } from '@songkeys/nestjs-redis';
 
 @Module({
   imports: [
@@ -29,6 +30,14 @@ import { JwtModule } from '@nestjs/jwt';
       global: true,
       secret: config.TOKEN.JWT_SECRET_KEY,
       signOptions: { expiresIn: config.TOKEN.ACCESS_TOKEN_TIME },
+    }),
+
+    RedisModule.forRoot({
+      config: {
+        host: config.REDIS_HOST,
+        port: config.REDIS_PORT,
+        password: config.REDIS_PASSWORD,
+      },
     }),
 
     AdminModule,

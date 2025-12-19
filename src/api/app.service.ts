@@ -127,9 +127,7 @@ export class Application {
       console.log(
         `Server running on: http://localhost:${config.PORT}/${this.API_PREFIX}`,
       );
-      console.log(
-        `Swagger docs: http://localhost:${config.PORT}/${this.SWAGGER_PATH}`,
-      );
+      console.log(`Swagger docs: ${config.SWAGGER_URL}`);
     });
   }
 }
