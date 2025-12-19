@@ -58,7 +58,7 @@ export class TeacherController {
       }
 
       return res.redirect(
-        `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
+        `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
       );
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -78,7 +78,7 @@ export class TeacherController {
       return {
         message:
           "Email bazada topilmadi. Avval Google orqali ro'yxatdan o'ting.",
-        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALBACK_URL, // Siz so'ragan qaytish linki
+        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALBACK_URL,
       };
     }
 
@@ -114,7 +114,6 @@ export class TeacherController {
       throw new UnauthorizedException("OTP xato yoki muddati o'tgan");
     }
 
-    // Ma'lumotlarni bazada yangilash (isComplete: true)
     const teacher = await this.teacherService.activateTeacher(
       data.email,
       data.phoneNumber,
