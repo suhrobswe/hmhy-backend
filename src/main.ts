@@ -1,3 +1,8 @@
-import appService from './api/app.service';
+import { Application } from './api/app.service';
 
-appService.main();
+async function main() {
+  const application = new Application();
+  await application.start();
+}
+
+main();

@@ -26,12 +26,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let message: string | string[] = 'Internal server error';
     let errorType = 'InternalServerError';
 
-    // ----------------------------------------------------
-    // XATOLIK TURINI ANIQLASH
-    // ----------------------------------------------------
-
     if (exception instanceof HttpException) {
-      // 1. Standart NestJS HTTP xatolar
       httpStatus = exception.getStatus();
       const responseBody = exception.getResponse();
 
@@ -57,7 +52,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = 'Database error';
       }
     } else if (
-      // 3. (YANGI QISM) Oddiy Obyekt sifatida kelgan xatolar (sizdagi holat)
       exception &&
       typeof exception === 'object' &&
       'statusCode' in exception
@@ -67,50 +61,41 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = errObj.message || message;
       errorType = errObj.error || errorType;
     }
+    const shouldLog = httpStatus >= 500 || httpStatus === 429;
 
-    // ----------------------------------------------------
-    // LOGGING: IP, Davlat va Device
-    // ----------------------------------------------------
-    const clientIp =
-      (request.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      request.ip ||
-      'Unknown IP';
+    if (shouldLog) {
+      const clientIp =
+        (request.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+        request.ip ||
+        'Unknown IP';
 
-    const geo = geoip.lookup(clientIp);
-    const country = geo ? geo.country : 'Unknown/Local';
-    const userAgent = request.headers['user-agent'] || 'Unknown Device';
+      const geo = geoip.lookup(clientIp);
+      const country = geo ? geo.country : 'Unknown/Local';
+      const userAgent = request.headers['user-agent'] || 'Unknown Device';
 
-    // Log obyekti
-    const errorLog = {
-      statusCode: httpStatus,
-      message: message,
-      path: request.url,
-      method: request.method,
-      ip: clientIp,
-      country: country,
-      device: userAgent,
-      timestamp: new Date().toISOString(),
-    };
+      const errorLog = {
+        statusCode: httpStatus,
+        message: message,
+        path: request.url,
+        method: request.method,
+        ip: clientIp,
+        country: country,
+        device: userAgent,
+        timestamp: new Date().toISOString(),
+      };
 
-    // LOG YOZISH
-    if (httpStatus === 429) {
-      this.logger.warn(
-        `DDOS ALERT | IP: ${clientIp} (${country}) is spamming! | ${JSON.stringify(errorLog)}`,
-      );
-    } else if (httpStatus >= 500) {
-      // Agar rostan ham 500 bo'lsa stackni chiqaramiz
-      this.logger.error(
-        `SERVER ERROR | Country: ${country} | ${JSON.stringify(errorLog)}`,
-        (exception as Error).stack || null,
-      );
-    } else {
-      // Client xatolari (400, 401, 404, 422 va h.k.) - Endi bu yerga tushadi
-      this.logger.warn(
-        `CLIENT ERROR | Country: ${country} | ${JSON.stringify(errorLog)}`,
-      );
+      if (httpStatus === 429) {
+        this.logger.warn(
+          `⚠️  DDoS ALERT | IP: ${clientIp} (${country}) | ${JSON.stringify(errorLog)}`,
+        );
+      } else {
+        this.logger.error(
+          `❌ SERVER ERROR | Country: ${country} | ${JSON.stringify(errorLog)}`,
+          (exception as Error).stack || null,
+        );
+      }
     }
-    console.log(exception)
-    // Clientga javob
+
     const responseBody = {
       statusCode: httpStatus,
       message: message,

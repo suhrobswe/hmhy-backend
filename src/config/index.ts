@@ -28,6 +28,7 @@ interface ConfigType {
   };
 
   FRONTEND_URL: string;
+  SWAGGER_URL: string;
 }
 
 export const config: ConfigType = {
@@ -56,4 +57,5 @@ export const config: ConfigType = {
   },
 
   FRONTEND_URL: String(process.env.FRONTEND_URL),
+  SWAGGER_URL: String(process.env.SWAGGER_URL),
 };
