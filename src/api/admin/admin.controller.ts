@@ -105,7 +105,7 @@ export class AdminController {
     schema: { example: { status: 'error', message: 'Admin not found' } },
   })
   @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+  @AccessRoles(Roles.SUPER_ADMIN, 'ID')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.adminService.findOneById(id);
@@ -134,7 +134,7 @@ export class AdminController {
     schema: { example: { status: 'error', message: 'Validation failed' } },
   })
   @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+  @AccessRoles(Roles.SUPER_ADMIN, 'ID')
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
     return this.adminService.updateAdmin(updateAdminDto, id);
