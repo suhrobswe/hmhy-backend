@@ -26,44 +26,47 @@ export class TeacherController {
     private jwtService: JwtService,
   ) {}
 
+  // ==================   GOOGLE CALLBACK     ====================================================================================================================
+
+  // teacher.controller.ts
+
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req, @Res() res: Response) {
     const googleUser = req.user;
     try {
-      const completeTeacher =
-        (await this.teacherService.findCompleteGoogleTeacher(
-          googleUser.email,
-        )) as any;
+      await this.teacherService.createIncompleteGoogleTeacher({
+        email: googleUser.email,
+        fullName: googleUser.fullName,
+        googleId: googleUser.googleId,
+        imageUrl: googleUser.imageUrl,
+        accessToken: googleUser.accessToken,
+        refreshToken: googleUser.refreshToken,
+      });
 
-      if (completeTeacher) {
+      const completeTeacher =
+        await this.teacherService.findCompleteGoogleTeacher(googleUser.email);
+
+      if (completeTeacher && completeTeacher.isComplete) {
         const token = this.jwtService.sign({
           id: completeTeacher.id,
           email: completeTeacher.email,
         });
         return res.redirect(
-          `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth?token=${token}`,
+          `${config.FRONTEND_URL}/login/success?token=${token}`,
         );
       }
 
-      const tempToken = this.jwtService.sign(
-        {
-          email: googleUser.email,
-          fullName: googleUser.fullName,
-          imageUrl: googleUser.imageUrl,
-          googleId: googleUser.googleId,
-          type: 'google-registration',
-        },
-        { expiresIn: '15m' },
-      );
-
       return res.redirect(
-        `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth/TeacherController_completeRegistration?token=${tempToken}`,
+        `http://localhost:4000/api/docs#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
       );
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
+
+  // ==================   SEND OTP     ====================================================================================================================
+
   @Post('google/send-otp')
   @ApiOperation({
     summary: 'Google-dan so‘ng email, telefon va parol kiritish',
@@ -99,6 +102,8 @@ export class TeacherController {
       verify_link: `${config.BACKEND_URL}/teacher/google/verify-otp`,
     };
   }
+
+  // ==================   VERIFY OTP     ====================================================================================================================
 
   @Post('google/verify-otp')
   @ApiOperation({ summary: 'OTP-ni tasdiqlash va faollashtirish' })

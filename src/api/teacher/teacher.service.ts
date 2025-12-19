@@ -27,6 +27,27 @@ export class TeacherService extends BaseService<
     super(teacherRepo);
   }
 
+  async createIncompleteGoogleTeacher(data: any) {
+    let teacher = (await this.teacherRepo.findOne({
+      where: { email: data.email },
+    })) as any;
+
+    if (!teacher) {
+      teacher = this.teacherRepo.create({
+        ...data,
+        isComplete: false,
+        isActive: false,
+      });
+    } else {
+      teacher.googleAccessToken = data.accessToken;
+      if (data.refreshToken) {
+        teacher.googleRefreshToken = data.refreshToken;
+      }
+    }
+
+    return await this.teacherRepo.save(teacher);
+  }
+
   async findTeacherByPhone(phoneNumber: string) {
     return await this.teacherRepo.findOne({ where: { phoneNumber } });
   }
