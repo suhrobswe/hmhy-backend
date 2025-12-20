@@ -8,7 +8,6 @@ import {
 import { LessonTemplate } from './lessonTemplate.entity';
 import { TeacherPayment } from './teacherPayment.entity';
 import { Lesson } from './lesson.entity';
-import { DeletedTeacher } from './deletedTeacher.entity';
 
 @Entity('teacher')
 export class Teacher extends BaseEntity {
@@ -23,6 +22,9 @@ export class Teacher extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   password: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  deletedBy: string;
 
   @Column({ type: 'varchar', unique: true, nullable: true })
   cardNumber: string;
@@ -54,6 +56,9 @@ export class Teacher extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   description: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  reasonDelete: string;
 
   @Column({ type: 'int', nullable: true })
   hourPrice: number;
@@ -90,7 +95,4 @@ export class Teacher extends BaseEntity {
 
   @OneToMany(() => Lesson, (lesson) => lesson.teacher)
   lessonHistory: Lesson[];
-
-  @OneToMany(() => DeletedTeacher, (deleted) => deleted.teacher)
-  deletedRecords: DeletedTeacher[];
 }

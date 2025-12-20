@@ -1,4 +1,7 @@
 import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +15,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import Redis from 'ioredis';
 import { InjectRedis } from '@songkeys/nestjs-redis';
+import { ISuccess } from 'src/infrastructure/pagination/successResponse';
+import { successRes } from 'src/infrastructure/response/success.response';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { SoftDeleteDto } from './dto/soft-delete.dto';
 
 @Injectable()
 export class TeacherService extends BaseService<
@@ -92,5 +99,53 @@ export class TeacherService extends BaseService<
     teacher.isActive = false;
 
     return await this.teacherRepo.save(teacher);
+  }
+
+  async updateTeacher(id: string, dto: UpdateTeacherDto): Promise<ISuccess> {
+    const { phoneNumber, cardNumber } = dto;
+
+    const teacher = await this.teacherRepo.findOne({ where: { id } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    if (phoneNumber) {
+      const existsPhoneNumber = await this.teacherRepo.findOne({
+        where: { phoneNumber },
+      });
+      if (existsPhoneNumber && existsPhoneNumber.id !== id)
+        throw new ConflictException('Phone number aready exists');
+    }
+
+    if (cardNumber) {
+      const existsCardNumber = await this.teacherRepo.findOne({
+        where: { phoneNumber },
+      });
+      if (existsCardNumber && existsCardNumber.id !== id)
+        throw new ConflictException('Phone number aready exists');
+    }
+
+    const updatedTeacher = await this.teacherRepo.update(id, dto);
+
+    return successRes(updatedTeacher);
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto): Promise<ISuccess> {
+    const { currentPassword, newPassword } = dto;
+    const teacher = await this.teacherRepo.findOne({ where: { id } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    const isMatchPassword = await this.crypto.decrypt(
+      currentPassword,
+      teacher.password,
+    );
+    if (!isMatchPassword)
+      throw new BadRequestException('Current password incorrect');
+
+    const hashedPassword = await this.crypto.encrypt(newPassword);
+
+    teacher.password = hashedPassword;
+
+    await this.teacherRepo.update(id, { password: hashedPassword });
+
+    return successRes({ message: 'Password successfully changed!' });
   }
 }

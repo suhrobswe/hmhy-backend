@@ -9,10 +9,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategy/google.strategy';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Teacher]),
-    JwtModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Teacher]), JwtModule],
   controllers: [TeacherController],
   providers: [TeacherService, CryptoService, TokenService, GoogleStrategy],
 })

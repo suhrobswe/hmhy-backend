@@ -15,6 +15,7 @@ import {
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { CookieGetter } from 'src/common/decorator/cookie-getter.decorator';
 import { AuthGuard } from 'src/common/guard/auth.guard';
+import { CheckIsActiveTeacherGuard } from 'src/common/guard/checkIsActive.guard';
 
 @ApiTags('Auth')
 @Controller()

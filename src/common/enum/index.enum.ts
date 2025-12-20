@@ -30,16 +30,16 @@ export enum Rating {
 }
 
 export enum TeacherSpecification {
-  ENGLISH = "ENGLISH",
-  RUSSIAN = "RUSSIAN",
-  DEUTSCH = "DEUTSCH",
-  SPANISH = "SPANISH",
-  FRENCH = "FRENCH",
-  ITALIAN = "ITALIAN",
-  JAPANESE = "JAPANESE",
-  CHINESE = "CHINESE",
-  ARABIC = "ARABIC",
-  KOREAN = "KOREAN",
+  ENGLISH = 'ENGLISH',
+  RUSSIAN = 'RUSSIAN',
+  DEUTSCH = 'DEUTSCH',
+  SPANISH = 'SPANISH',
+  FRENCH = 'FRENCH',
+  ITALIAN = 'ITALIAN',
+  JAPANESE = 'JAPANESE',
+  CHINESE = 'CHINESE',
+  ARABIC = 'ARABIC',
+  KOREAN = 'KOREAN',
 }
 
 export enum AuthProvider {

@@ -94,7 +94,7 @@ export class AdminService
       const existsPhoneNumber = await this.adminRepo.findOne({
         where: { phoneNumber },
       });
-      if (existsPhoneNumber && existsPhoneNumber.id === id)
+      if (existsPhoneNumber && existsPhoneNumber.id !== id)
         throw new ConflictException('Phone number already exists');
     }
     let hashPassword: string = '';

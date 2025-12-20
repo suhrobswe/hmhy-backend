@@ -8,15 +8,27 @@ import {
   UseGuards,
   UnauthorizedException,
   ConflictException,
+  Patch,
+  Param,
+  Delete,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { TeacherService } from './teacher.service';
 import { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
 import { config } from 'src/config';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { AccessRoles } from 'src/common/decorator/roles.decorator';
+import { Roles } from 'src/common/enum/index.enum';
+import { RolesGuard } from 'src/common/guard/role.guard';
+import { AuthGuard } from 'src/common/guard/auth.guard';
+import { AuthGuard as AuthPassportGuard } from '@nestjs/passport';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import type { IToken } from 'src/infrastructure/token/interface';
+import { CurrentUser } from 'src/common/decorator/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { SoftDeleteDto } from './dto/soft-delete.dto';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -31,7 +43,7 @@ export class TeacherController {
   // teacher.controller.ts
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(AuthPassportGuard('google'))
   async googleCallback(@Req() req, @Res() res: Response) {
     const googleUser = req.user;
     try {
@@ -128,5 +140,118 @@ export class TeacherController {
       teacherId: teacher.id,
       status: 'Pending Admin Approval',
     };
+  }
+
+  // ================ CRUD ETC ====================================================================================
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Patch('soft-delete/:id')
+  softDelete(
+    @Param('id') id: string,
+    @Body() dto: SoftDeleteDto,
+    @CurrentUser() adminId: IToken,
+  ) {
+    return this.teacherService.softDelete(id, dto, adminId.id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Get()
+  findAll() {
+    return this.teacherService.findAll({
+      where: { isDelete: false, isActive: true },
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Get('applications')
+  findAllApplications() {
+    return this.teacherService.findAll({
+      where: { isActive: false },
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Patch('activate/:id')
+  teacherActivate(@Param('id') id: string) {
+    return this.teacherService.updateStatus(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @Get('deleted')
+  findAllDeleted() {
+    return this.teacherService.findAll({ where: { isDelete: true } });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @Patch('restore/:id')
+  restoreTeacher(@Param('id') id: string) {
+    return this.teacherService.restoreTeacher(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @Delete('hard-delete/:id')
+  hardDetete(@Param('id') id: string) {
+    return this.teacherService.delete(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @Get('me')
+  getMe(@CurrentUser() user: IToken) {
+    return this.teacherService.findOneById(user.id, {
+      select: {
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.teacherService.findOneById(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @Patch('update')
+  update(@CurrentUser() user: IToken, @Body() dto: UpdateTeacherDto) {
+    return this.teacherService.updateTeacher(user.id, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @Patch('changePassword')
+  changePassword(@CurrentUser() user: IToken, @Body() dto: ChangePasswordDto) {
+    return this.teacherService.changePassword(user.id, dto);
   }
 }

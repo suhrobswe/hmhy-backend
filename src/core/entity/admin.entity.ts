@@ -11,7 +11,7 @@ export class Admin extends BaseEntity {
   password: string;
 
   @Column({ type: 'varchar' })
-  phoneNumber: string
+  phoneNumber: string;
 
   @Column({ type: 'enum', enum: Roles, default: Roles.ADMIN })
   role: Roles;

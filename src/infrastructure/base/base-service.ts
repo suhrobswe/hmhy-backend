@@ -1,8 +1,13 @@
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { successRes } from '../response/success.response';
-import { IFindOptions, IResponsePagination, ISuccess } from '../pagination/successResponse';
+import {
+  IFindOptions,
+  IResponsePagination,
+  ISuccess,
+} from '../pagination/successResponse';
 import { RepositoryPager } from '../pagination/RepositoryPager';
+import { SoftDeleteDto } from 'src/api/teacher/dto/soft-delete.dto';
 
 export class BaseService<CreateDto, UpdateDto, Entity> {
   constructor(private readonly repository: Repository<any>) {}
@@ -24,6 +29,23 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
       ...options,
     })) as Entity[];
     return successRes(data);
+  }
+
+  async softDelete(
+    id: string,
+    dto: SoftDeleteDto,
+    adminId: string,
+  ): Promise<ISuccess> {
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    user.isDelete = true;
+    user.reasonDelete = dto.reason;
+    user.deletedBy = adminId;
+
+    const updateData = this.repository.update(id, user);
+    return successRes({ updateData });
   }
 
   async findAllWithPagination(
@@ -72,25 +94,33 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     return successRes({});
   }
 
-  async softDelete(id: string): Promise<ISuccess> {
+  async restoreTeacher(id: string): Promise<ISuccess> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-    console.log('user', user);
-    user.isDeleted = true;
+    user.isDelete = false;
 
-    const data = await this.repository.save(user);
-    return successRes({ isDelete: data?.isDeleted });
+    const updateData = this.repository.update(id, user);
+    return successRes({ updateData });
   }
-
   async updateStatus(id: string): Promise<ISuccess> {
-    const user = await this.repository.findOne({ where: { id } });
+    const user = await this.repository.findOne({
+      where: { id },
+      select: ['id', 'isActive'],
+    });
+
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-    user.isActive = !user.isActive;
-    const data = await this.repository.save(user);
-    return successRes({ isActive: data?.isActive });
+
+    const newStatus = !user.isActive;
+
+    await this.repository.update(id, { isActive: newStatus });
+
+    return successRes({
+      message: 'Status updated successfully',
+      isActive: newStatus,
+    });
   }
 }
