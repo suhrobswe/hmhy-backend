@@ -11,14 +11,19 @@ import {
   Patch,
   Param,
   Delete,
+  BadRequestException,
 } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
 import { config } from 'src/config';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { SendOtpDto } from './dto/send-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/index.enum';
 import { RolesGuard } from 'src/common/guard/role.guard';
@@ -29,6 +34,10 @@ import type { IToken } from 'src/infrastructure/token/interface';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { SoftDeleteDto } from './dto/soft-delete.dto';
+import { randomUUID } from 'crypto';
+import { InjectRedis } from '@songkeys/nestjs-redis';
+import Redis from 'ioredis';
+import { VerifyTelegramOtpDto } from './dto/verify-otp.dto';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -36,6 +45,7 @@ export class TeacherController {
   constructor(
     private teacherService: TeacherService,
     private jwtService: JwtService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   // ==================   GOOGLE CALLBACK     ====================================================================================================================
@@ -97,42 +107,59 @@ export class TeacherController {
     const phoneCheck = await this.teacherService.findTeacherByPhone(
       body.phoneNumber,
     );
-    if (phoneCheck) throw new ConflictException('Bu telefon raqami band');
+    if (phoneCheck) {
+      throw new ConflictException('Bu telefon raqami band');
+    }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = randomUUID();
 
-    await this.teacherService.saveOtpToRedis(body.phoneNumber, {
-      email: body.email,
-      password: body.password,
-      phoneNumber: body.phoneNumber,
-      otp,
-    });
+    await this.redis.set(
+      `tg:register:${token}`,
+      JSON.stringify({
+        email: body.email,
+        password: body.password,
+      }),
+      'EX',
+      300,
+    );
 
     return {
-      message: 'OTP telefon raqamga yuborildi',
-      otp: otp,
-      verify_link: `${config.BACKEND_URL}/teacher/google/verify-otp`,
+      message: 'Telegram botga o‘ting va telefon raqamingizni tasdiqlang',
+      telegram_url: `https://t.me/hmhy_otp_bot?start=${token}`,
     };
   }
 
   // ==================   VERIFY OTP     ====================================================================================================================
 
-  @Post('google/verify-otp')
-  @ApiOperation({ summary: 'OTP-ni tasdiqlash va faollashtirish' })
-  async verifyOtp(@Body() body: VerifyOtpDto) {
-    const data = await this.teacherService.getOtpFromRedis(body.phoneNumber);
-
-    if (!data || data.otp !== body.otp) {
-      throw new UnauthorizedException("OTP xato yoki muddati o'tgan");
+  @Post('google/verify-telegram')
+  async verifyTelegram(
+    @Body() body: VerifyTelegramOtpDto,
+  ) {
+    const otpData = await this.redis.get(`otp:${body.phoneNumber}`);
+    if (!otpData) {
+      throw new BadRequestException('OTP muddati o‘tgan');
     }
 
+    const parsedOtp = JSON.parse(otpData);
+    if (parsedOtp.otp !== body.otp) {
+      throw new BadRequestException('OTP noto‘g‘ri');
+    }
+
+    const registerData = await this.redis.get(`tg:register:${body.token}`);
+    if (!registerData) {
+      throw new BadRequestException('Token eskirgan');
+    }
+
+    const { email, password } = JSON.parse(registerData);
+
     const teacher = await this.teacherService.activateTeacher(
-      data.email,
-      data.phoneNumber,
-      data.password,
+      email,
+      body.phoneNumber,
+      password,
     );
 
-    await this.teacherService.deleteOtpFromRedis(body.phoneNumber);
+    await this.redis.del(`otp:${body.phoneNumber}`);
+    await this.redis.del(`tg:register:${body.token}`);
 
     return {
       message:
@@ -160,10 +187,10 @@ export class TeacherController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get()
-  findAll() {
-    return this.teacherService.findAll({
-      where: { isDelete: false, isActive: true },
-    });
+  @ApiOperation({ summary: 'Get all teachers' })
+  @ApiResponse({ status: 200, description: 'Teachers list' })
+  async findAll() {
+    return this.teacherService.findAll({ where: { isActive: true } });
   }
 
   @ApiBearerAuth()

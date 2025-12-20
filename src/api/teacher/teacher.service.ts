@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -18,7 +17,6 @@ import { InjectRedis } from '@songkeys/nestjs-redis';
 import { ISuccess } from 'src/infrastructure/pagination/successResponse';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { SoftDeleteDto } from './dto/soft-delete.dto';
 
 @Injectable()
 export class TeacherService extends BaseService<

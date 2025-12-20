@@ -46,3 +46,10 @@ export enum AuthProvider {
   LOCAL = 'LOCAL',
   GOOGLE = 'GOOGLE',
 }
+
+export enum SearchFieldEnum {
+  FULL_NAME = 'fullName',
+  EMAIL = 'email',
+  SPECIFICATION = 'specification',
+  DESCRIPTION = 'description',
+}

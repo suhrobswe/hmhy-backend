@@ -53,7 +53,6 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
   ): Promise<IResponsePagination> {
     return await RepositoryPager.findAll(this.getRepository, options);
   }
-
   async findOneBy(options: IFindOptions<Entity>): Promise<ISuccess> {
     const data = (await this.repository.findOne({
       select: options.select || {},
