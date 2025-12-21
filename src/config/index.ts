@@ -24,7 +24,7 @@ interface ConfigType {
   GOOGLE_AUTH: {
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
-    GOOGLE_CALBACK_URL: string;
+    GOOGLE_CALLBACK_URL: string;
   };
 
   FRONTEND_URL: string;
@@ -57,7 +57,7 @@ export const config: ConfigType = {
   },
 
   GOOGLE_AUTH: {
-    GOOGLE_CALBACK_URL: String(process.env.GOOGLE_CALBACK_URL),
+    GOOGLE_CALLBACK_URL: String(process.env.GOOGLE_CALLBACK_URL),
     GOOGLE_CLIENT_ID: String(process.env.GOOGLE_CLIENT_ID),
     GOOGLE_CLIENT_SECRET: String(process.env.GOOGLE_CLIENT_SECRET),
   },
