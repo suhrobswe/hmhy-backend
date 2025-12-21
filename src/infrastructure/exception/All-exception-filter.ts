@@ -43,7 +43,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = responseBody;
       }
     } else if (exception instanceof QueryFailedError) {
-      // 2. Database (TypeORM) xatolar
       if ((exception as any).code === '23505') {
         httpStatus = HttpStatus.CONFLICT;
         message = 'Duplicate entry';

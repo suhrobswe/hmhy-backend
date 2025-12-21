@@ -132,9 +132,7 @@ export class TeacherController {
   // ==================   VERIFY OTP     ====================================================================================================================
 
   @Post('google/verify-telegram')
-  async verifyTelegram(
-    @Body() body: VerifyTelegramOtpDto,
-  ) {
+  async verifyTelegram(@Body() body: VerifyTelegramOtpDto) {
     const otpData = await this.redis.get(`otp:${body.phoneNumber}`);
     if (!otpData) {
       throw new BadRequestException('OTP muddati o‘tgan');

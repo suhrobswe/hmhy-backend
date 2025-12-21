@@ -82,7 +82,7 @@ export class UpdateTeacherDto {
 
   @ApiPropertyOptional({
     description: 'Portfolio link or website',
-    example: 'https://myportfolio.com',
+    example: 'https://github.com/suhrobswe',
     maxLength: 500,
   })
   @IsString()

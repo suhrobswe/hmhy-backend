@@ -1,4 +1,3 @@
-// app.service.ts
 import {
   ClassSerializerInterceptor,
   HttpStatus,
@@ -124,9 +123,7 @@ export class Application {
 
   private async startServer(app: NestExpressApplication): Promise<void> {
     await app.listen(config.PORT, () => {
-      console.log(
-        `Server running on: http://localhost:${config.PORT}/${this.API_PREFIX}`,
-      );
+      console.log(`Server running on: ${config.BACKEND_URL}`);
       console.log(`Swagger docs: ${config.SWAGGER_URL}`);
     });
   }
