@@ -100,7 +100,7 @@ export class TeacherController {
       return {
         message:
           "Email bazada topilmadi. Avval Google orqali ro'yxatdan o'ting.",
-        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALBACK_URL,
+        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALLBACK_URL,
       };
     }
 
