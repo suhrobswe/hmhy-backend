@@ -34,6 +34,8 @@ interface ConfigType {
   REDIS_PORT: number;
   REDIS_PASSWORD: string;
 
+  TELEGRAM_BOT_TOKEN: string;
+
   BACKEND_URL: string;
 
   MAIL: {
@@ -86,4 +88,6 @@ export const config: ConfigType = {
     MAIL_SECURE: String(process.env.NODE_ENV) === 'development' ? false : true,
     MAIL_USER: String(process.env.MAIL_USER),
   },
+
+  TELEGRAM_BOT_TOKEN: String(process.env.TELEGRAM_BOT_TOKEN),
 };

@@ -8,6 +8,7 @@ import { TeacherModule } from './teacher/teacher.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { LessonModule } from './lesson/lesson.module';
+import { StudentModule } from './student/student.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { LessonModule } from './lesson/lesson.module';
     AuthModule,
     TeacherModule,
     LessonModule,
+    StudentModule
   ],
 })
 export class AppModule {}
