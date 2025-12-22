@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
@@ -5,8 +6,6 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
-  IsUUID,
   MaxLength,
   Min,
   MinLength,
@@ -14,46 +13,57 @@ import {
 import { LessonStatus } from 'src/common/enum/index.enum';
 
 export class CreateLessonDto {
-  @IsString()
+  @ApiProperty({
+    example: 'Matematika 101',
+    description: 'Darsning nomi',
+    minLength: 2,
+    maxLength: 200,
+  })
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(200)
   name: string;
 
+  @ApiProperty({
+    example: '2025-12-23T10:00:00Z',
+    description: 'Dars boshlanish vaqti ISO string formatda',
+  })
   @IsDateString()
   @IsNotEmpty()
   startTime: string;
 
+  @ApiProperty({
+    example: '2025-12-23T11:00:00Z',
+    description: 'Dars tugash vaqti ISO string formatda',
+  })
   @IsDateString()
   @IsNotEmpty()
   endTime: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  teacherId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  studentId: string;
-
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  googleMeetUrl?: string;
-
-  @IsEnum(LessonStatus)
-  @IsOptional()
-  status?: LessonStatus;
-
-  @IsString()
-  @IsOptional()
-  googleEventId?: string;
-
+  @ApiProperty({
+    example: 50000,
+    description: "Dars narxi (so'mda)",
+    minimum: 0,
+  })
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsNotEmpty()
   @Min(0)
   price: number;
 
+  @ApiPropertyOptional({
+    enum: LessonStatus,
+    description: 'Dars holati',
+    default: LessonStatus.AVAILABLE,
+  })
+  @IsEnum(LessonStatus)
+  @IsOptional()
+  status?: LessonStatus;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Dars to`langan yoki yo`qligi',
+    default: false,
+  })
   @IsBoolean()
   @IsOptional()
   isPaid?: boolean;

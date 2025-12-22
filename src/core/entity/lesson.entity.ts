@@ -19,7 +19,7 @@ export class Lesson extends BaseEntity {
   @Column({ type: 'uuid' })
   teacherId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   studentId: string;
 
   @ManyToOne(() => Teacher, (teacher) => teacher.lessonHistory)
@@ -31,13 +31,13 @@ export class Lesson extends BaseEntity {
   student: Student;
 
   @Column({ type: 'varchar', nullable: true })
-  googleMeetUrl: string;
+  googleMeetUrl?: string;
 
   @Column({ type: 'enum', enum: LessonStatus, default: LessonStatus.AVAILABLE })
   status: LessonStatus;
 
   @Column({ type: 'varchar', nullable: true })
-  googleEventId: string;
+  googleEventId?: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
@@ -46,23 +46,23 @@ export class Lesson extends BaseEntity {
   isPaid: boolean;
 
   @Column({ type: 'uuid', nullable: true })
-  teacherPayment: string;
+  teacherPayment?: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  bookedAt: Date;
+  bookedAt?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  remainedSendAt: Date;
+  remainedSendAt?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  completedAt: Date;
+  completedAt?: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  notification: string;
+  notification?: string;
 
   @Column({ type: 'uuid', nullable: true })
-  transaction: string;
+  transaction?: string;
 
   @OneToMany(() => Notification, (notification) => notification.lesson)
-  notifications: Notification[];
+  notifications?: Notification[];
 }

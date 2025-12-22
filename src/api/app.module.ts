@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { LessonModule } from './lesson/lesson.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     AdminModule,
     AuthModule,
     TeacherModule,
+    LessonModule,
   ],
 })
 export class AppModule {}
