@@ -111,7 +111,7 @@ export class TeacherController {
           email: teacher.email,
         });
         return res.redirect(
-          `${config.FRONTEND_URL}/login/success?token=${token}`,
+          `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
         );
       }
 
@@ -195,7 +195,23 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get()
   findAll() {
-    return this.teacherService.findAll({ where: { isActive: true } });
+    return this.teacherService.findAll({
+      where: { isActive: true },
+      select: {
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    });
   }
 
   @ApiBearerAuth()
@@ -270,6 +286,7 @@ export class TeacherController {
   }
 
   @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.TEACHER)
   @Patch('changePassword')

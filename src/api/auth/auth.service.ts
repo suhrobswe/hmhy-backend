@@ -108,7 +108,7 @@ export class AuthService {
 
     let user: any = null;
     switch (data.role) {
-      case 'PATIENT':
+      case 'TEACHER':
         user = await this.teacherRepo.findOne({ where: { id: data.id } });
         break;
       case 'ADMIN':
