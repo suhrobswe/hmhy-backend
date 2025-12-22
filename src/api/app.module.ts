@@ -6,7 +6,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { JwtModule } from '@nestjs/jwt';
-import { RedisModule } from '@songkeys/nestjs-redis';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -33,11 +33,8 @@ import { RedisModule } from '@songkeys/nestjs-redis';
     }),
 
     RedisModule.forRoot({
-      config: {
-        host: config.REDIS_HOST,
-        port: config.REDIS_PORT,
-        password: config.REDIS_PASSWORD,
-      },
+      type: 'single',
+      url: `redis://:${config.REDIS_PASSWORD}@${config.REDIS_HOST}:${config.REDIS_PORT}`,
     }),
 
     AdminModule,

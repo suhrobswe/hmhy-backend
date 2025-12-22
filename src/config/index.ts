@@ -35,6 +35,14 @@ interface ConfigType {
   REDIS_PASSWORD: string;
 
   BACKEND_URL: string;
+
+  MAIL: {
+    MAIL_PASS: string;
+    MAIL_HOST: string;
+    MAIL_PORT: number;
+    MAIL_SECURE: boolean;
+    MAIL_USER: string;
+  };
 }
 
 export const config: ConfigType = {
@@ -70,4 +78,12 @@ export const config: ConfigType = {
   REDIS_PASSWORD: String(process.env.REDIS_PASSWORD),
 
   BACKEND_URL: String(process.env.BACKEND_URL),
+
+  MAIL: {
+    MAIL_HOST: String(process.env.MAIL_HOST),
+    MAIL_PASS: String(process.env.MAIL_PASS),
+    MAIL_PORT: Number(process.env.MAIL_PORT),
+    MAIL_SECURE: String(process.env.NODE_ENV) === 'development' ? false : true,
+    MAIL_USER: String(process.env.MAIL_USER),
+  },
 };

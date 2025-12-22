@@ -6,38 +6,34 @@ import {
   Req,
   Res,
   UseGuards,
-  UnauthorizedException,
   ConflictException,
+  BadRequestException,
   Patch,
   Param,
   Delete,
-  BadRequestException,
 } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { JwtService } from '@nestjs/jwt';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 import { config } from 'src/config';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { SoftDeleteDto } from './dto/soft-delete.dto';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/index.enum';
 import { RolesGuard } from 'src/common/guard/role.guard';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AuthGuard as AuthPassportGuard } from '@nestjs/passport';
-import { UpdateTeacherDto } from './dto/update-teacher.dto';
-import type { IToken } from 'src/infrastructure/token/interface';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { SoftDeleteDto } from './dto/soft-delete.dto';
-import { randomUUID } from 'crypto';
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import type { IToken } from 'src/infrastructure/token/interface';
 import Redis from 'ioredis';
-import { VerifyTelegramOtpDto } from './dto/verify-otp.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { generateOtp } from 'src/common/util/otp-generator';
+import { MailService } from 'src/infrastructure/mail/mail.service';
+import passport from 'passport';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -45,17 +41,56 @@ export class TeacherController {
   constructor(
     private teacherService: TeacherService,
     private jwtService: JwtService,
+    private readonly mailService: MailService,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  // ==================   GOOGLE CALLBACK     ====================================================================================================================
+  // Google OAuth endpoints
+  @Get('google')
+  @ApiOperation({ summary: 'Google OAuth login' })
+  googleLogin(@Req() req, @Res() res) {
+    // Custom authenticate with prompt=consent to force refresh token
+    passport.authenticate(
+      'google',
+      {
+        scope: [
+          'email',
+          'profile',
+          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events',
+        ],
+        accessType: 'offline',
+        prompt: 'consent',
+      } as passport.AuthenticateOptions,
+      (err, user, info) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ error: 'Authentication failed', details: err });
+        }
+        if (!user) {
+          return res.status(401).json({ error: 'No user found', info });
+        }
 
-  // teacher.controller.ts
+        // Manually log in the user
+        req.logIn(user, (loginErr) => {
+          if (loginErr) {
+            return res
+              .status(500)
+              .json({ error: 'Login failed', details: loginErr });
+          }
+          return res.redirect('/dashboard'); // yoki kerakli joyga yo'naltiring
+        });
+      },
+    )(req, res);
+  }
 
+  // ===================== GOOGLE CALLBACK =====================
   @Get('google/callback')
   @UseGuards(AuthPassportGuard('google'))
-  async googleCallback(@Req() req, @Res() res: Response) {
-    const googleUser = req.user;
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
+    const googleUser = req.user as any;
+
     try {
       await this.teacherService.createIncompleteGoogleTeacher({
         email: googleUser.email,
@@ -66,109 +101,83 @@ export class TeacherController {
         refreshToken: googleUser.refreshToken,
       });
 
-      const completeTeacher =
-        await this.teacherService.findCompleteGoogleTeacher(googleUser.email);
+      const teacher = await this.teacherService.findCompleteGoogleTeacher(
+        googleUser.email,
+      );
 
-      if (completeTeacher && completeTeacher.isComplete) {
+      if (teacher?.isComplete) {
         const token = this.jwtService.sign({
-          id: completeTeacher.id,
-          email: completeTeacher.email,
+          id: teacher.id,
+          email: teacher.email,
         });
         return res.redirect(
           `${config.FRONTEND_URL}/login/success?token=${token}`,
         );
       }
 
+      // Agar ro'yxat to'liq emas bo'lsa
       return res.redirect(
         `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
       );
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  // ==================   SEND OTP     ====================================================================================================================
-
+  // ===================== SEND OTP =====================
   @Post('google/send-otp')
-  @ApiOperation({
-    summary: 'Google-dan so‘ng email, telefon va parol kiritish',
-  })
   async sendOtp(@Body() body: SendOtpDto) {
     const teacher = await this.teacherService.findByEmail(body.email);
-
-    if (!teacher) {
-      return {
-        message:
-          "Email bazada topilmadi. Avval Google orqali ro'yxatdan o'ting.",
-        google_callback_url: config.GOOGLE_AUTH.GOOGLE_CALLBACK_URL,
-      };
-    }
+    if (!teacher) throw new BadRequestException('Email topilmadi');
 
     const phoneCheck = await this.teacherService.findTeacherByPhone(
       body.phoneNumber,
     );
-    if (phoneCheck) {
-      throw new ConflictException('Bu telefon raqami band');
-    }
+    if (phoneCheck) throw new ConflictException('Telefon raqami band');
 
-    const token = randomUUID();
+    const otp = generateOtp();
 
     await this.redis.set(
-      `tg:register:${token}`,
+      `otp:google:${body.email}`,
       JSON.stringify({
-        email: body.email,
+        otp,
+        phoneNumber: body.phoneNumber,
         password: body.password,
       }),
       'EX',
       300,
     );
 
-    return {
-      message: 'Telegram botga o‘ting va telefon raqamingizni tasdiqlang',
-      telegram_url: `https://t.me/hmhy_otp_bot?start=${token}`,
-    };
+    // await this.mailService.sendOtp(body.email, otp); // buni tog'irlash kerak
+
+    return { message: 'OTP emailingizga yuborildi', otp: otp };
   }
 
-  // ==================   VERIFY OTP     ====================================================================================================================
+  // ===================== VERIFY OTP =====================
+  @Post('google/verify-otp')
+  async verifyOtp(@Body() body: VerifyOtpDto) {
+    const data = await this.redis.get(`otp:google:${body.email}`);
+    if (!data) throw new BadRequestException('OTP muddati o‘tgan');
 
-  @Post('google/verify-telegram')
-  async verifyTelegram(@Body() body: VerifyTelegramOtpDto) {
-    const otpData = await this.redis.get(`otp:${body.phoneNumber}`);
-    if (!otpData) {
-      throw new BadRequestException('OTP muddati o‘tgan');
-    }
-
-    const parsedOtp = JSON.parse(otpData);
-    if (parsedOtp.otp !== body.otp) {
-      throw new BadRequestException('OTP noto‘g‘ri');
-    }
-
-    const registerData = await this.redis.get(`tg:register:${body.token}`);
-    if (!registerData) {
-      throw new BadRequestException('Token eskirgan');
-    }
-
-    const { email, password } = JSON.parse(registerData);
+    const parsed = JSON.parse(data);
+    if (parsed.otp !== body.otp) throw new BadRequestException('OTP noto‘g‘ri');
 
     const teacher = await this.teacherService.activateTeacher(
-      email,
-      body.phoneNumber,
-      password,
+      body.email,
+      parsed.phoneNumber,
+      parsed.password,
     );
 
-    await this.redis.del(`otp:${body.phoneNumber}`);
-    await this.redis.del(`tg:register:${body.token}`);
+    await this.redis.del(`otp:google:${body.email}`);
 
     return {
-      message:
-        "Muvaffaqiyatli ro'yxatdan o'tdingiz. Admin tasdiqlashini kuting.",
-      teacherId: teacher.id,
+      message: "Ro'yxatdan o'tish yakunlandi",
       status: 'Pending Admin Approval',
+      teacherId: teacher.id,
     };
   }
 
-  // ================ CRUD ETC ====================================================================================
-
+  // ===================== CRUD =====================
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
@@ -176,18 +185,16 @@ export class TeacherController {
   softDelete(
     @Param('id') id: string,
     @Body() dto: SoftDeleteDto,
-    @CurrentUser() adminId: IToken,
+    @CurrentUser() admin: IToken,
   ) {
-    return this.teacherService.softDelete(id, dto, adminId.id);
+    return this.teacherService.softDelete(id, dto, admin.id);
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get()
-  @ApiOperation({ summary: 'Get all teachers' })
-  @ApiResponse({ status: 200, description: 'Teachers list' })
-  async findAll() {
+  findAll() {
     return this.teacherService.findAll({ where: { isActive: true } });
   }
 
@@ -196,9 +203,7 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get('applications')
   findAllApplications() {
-    return this.teacherService.findAll({
-      where: { isActive: false },
-    });
+    return this.teacherService.findAll({ where: { isActive: false } });
   }
 
   @ApiBearerAuth()
@@ -229,7 +234,7 @@ export class TeacherController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN)
   @Delete('hard-delete/:id')
-  hardDetete(@Param('id') id: string) {
+  hardDelete(@Param('id') id: string) {
     return this.teacherService.delete(id);
   }
 
@@ -254,14 +259,6 @@ export class TeacherController {
         specification: true,
       },
     });
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.teacherService.findOneById(id);
   }
 
   @ApiBearerAuth()

@@ -13,10 +13,10 @@ import { Teacher } from 'src/core/entity/teacher.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import Redis from 'ioredis';
-import { InjectRedis } from '@songkeys/nestjs-redis';
 import { ISuccess } from 'src/infrastructure/pagination/successResponse';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class TeacherService extends BaseService<

@@ -7,9 +7,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Teacher } from 'src/core/entity/teacher.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategy/google.strategy';
+import { MailModule } from 'src/infrastructure/mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Teacher]), JwtModule],
+  imports: [TypeOrmModule.forFeature([Teacher]), JwtModule, MailModule],
   controllers: [TeacherController],
   providers: [TeacherService, CryptoService, TokenService, GoogleStrategy],
 })

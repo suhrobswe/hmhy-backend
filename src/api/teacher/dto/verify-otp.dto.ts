@@ -1,32 +1,18 @@
-import { IsNotEmpty, IsString, Matches, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 
-export class VerifyTelegramOtpDto {
+export class VerifyOtpDto {
   @ApiProperty({
-    example: 'c7f1a5e3-4d2b-4a1a-9e9f-2c3f7d1b9a01',
-    description: 'Telegram /start orqali olingan token',
+    example: 'user@example.com',
+    description: 'Teacher email address',
   })
-  @IsString()
-  @IsNotEmpty()
-  token: string;
+  @IsEmail({}, { message: 'Email formati noto‘g‘ri' })
+  @IsNotEmpty({ message: 'Email kiritilishi shart' })
+  email: string;
 
-  @ApiProperty({
-    example: '113772',
-    description: 'Telegram bot yuborgan 6 xonali OTP',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(6, 6, { message: "OTP 6 ta raqam bo'lishi kerak" })
+  @ApiProperty({ example: '123456', description: 'OTP code sent to email' })
+  @IsString({ message: 'OTP faqat matn bo‘lishi kerak' })
+  @Length(6, 6, { message: 'OTP 6 ta raqamdan iborat bo‘lishi kerak' })
+  @IsNotEmpty({ message: 'OTP kiritilishi shart' })
   otp: string;
-
-  @ApiProperty({
-    example: '+998901234567',
-    description: 'Telegram orqali tasdiqlangan telefon raqam',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^\+?[1-9]\d{1,14}$/, {
-    message: "Telefon raqam noto'g'ri formatda",
-  })
-  phoneNumber: string;
 }
