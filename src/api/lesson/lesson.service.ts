@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -11,10 +12,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { GoogleCalendarService } from './google-calendar.service';
 import { Teacher } from 'src/core/entity/teacher.entity';
 import { Student } from 'src/core/entity/student.entity';
-import { LessonStatus } from 'src/common/enum/index.enum';
+import { LessonStatus, Rating } from 'src/common/enum/index.enum';
 import type { LessonRepository } from 'src/core/repository/lesson.repository';
 import type { TeacherRepository } from 'src/core/repository/teacher.repository';
 import type { StudentRepository } from 'src/core/repository/student.repository';
+import { LessonComplete } from './dto/lesson-complete.dto';
+import { w } from 'node_modules/@faker-js/faker/dist/airline-DF6RqYmq';
+import { successRes } from 'src/infrastructure/response/success.response';
+import { LessonHistory } from 'src/core/entity/lessonHistory.entity';
+import type { LessonHistoryRepository } from 'src/core/repository/lessonHistory.repository';
 
 @Injectable()
 export class LessonService extends BaseService<
@@ -29,6 +35,9 @@ export class LessonService extends BaseService<
     @InjectRepository(Student)
     private readonly studentRepo: StudentRepository,
     private readonly calendarService: GoogleCalendarService,
+
+    @InjectRepository(LessonHistory)
+    private readonly lessonHistoryRepo: LessonHistoryRepository,
   ) {
     super(lessonRepo);
   }
@@ -144,7 +153,54 @@ export class LessonService extends BaseService<
       );
     }
   }
+  // lesson.service.ts
+  // lesson.service.ts
+  async lessonComplete(
+    teacherId: string,
+    dto: LessonComplete,
+    lessonId: string,
+  ) {
+    // Lessonni topish
+    const lesson = await this.lessonRepo.findOne({
+      where: { id: lessonId },
+    });
 
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    // Teacher tegishliligini tekshirish
+    if (lesson.teacherId !== teacherId) {
+      throw new ForbiddenException('You can only complete your own lessons');
+    }
+
+    // Agar allaqachon completed bo'lsa
+    if (lesson.status === LessonStatus.COMPLETED) {
+      throw new BadRequestException('Lesson is already completed');
+    }
+
+          console.log(teacherId, lesson);
+
+
+    return await this.lessonRepo.manager.transaction(async (manager) => {
+      // LessonHistory yaratish - faqat schemadagi maydonlar
+      const lessonHistory = await manager.save(LessonHistory, {
+        lessonId: lessonId,
+        star: dto.star || Rating.FIVE,
+        feedback: dto.feedback || 'feedback mavjud emas',
+        teacherId: lesson.teacherId,
+        studentId: lesson.studentId,
+      });
+
+      // Lessonni o'chirish
+      await manager.delete(Lesson, lessonId);
+
+      return successRes({
+        message: 'Lesson completed and moved to history',
+        lessonHistory,
+      });
+    });
+  }
   /**
    * Student darsni booking qiladi
    */

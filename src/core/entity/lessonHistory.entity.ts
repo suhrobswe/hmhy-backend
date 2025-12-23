@@ -8,9 +8,6 @@ export class LessonHistory extends BaseEntity {
   @Column({ type: 'uuid' })
   lessonId: string;
 
-  @Column({ type: 'varchar' })
-  fullName: string;
-
   @Column({ type: 'enum', enum: Rating })
   star: Rating;
 

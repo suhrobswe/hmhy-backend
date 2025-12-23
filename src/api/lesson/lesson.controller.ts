@@ -13,6 +13,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { LessonService } from './lesson.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -22,7 +24,8 @@ import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import { RolesGuard } from 'src/common/guard/role.guard';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
-import { Roles } from 'src/common/enum/index.enum';
+import { LessonStatus, Rating, Roles } from 'src/common/enum/index.enum';
+import { LessonComplete } from './dto/lesson-complete.dto';
 @ApiTags('Lessons')
 @ApiBearerAuth()
 @Controller('lessons')
@@ -49,13 +52,54 @@ export class LessonController {
     @Body() createLessonDto: CreateLessonDto,
     @CurrentUser() user: IToken,
   ) {
-    console.log(user);
+    // console.log(user);
     return this.lessonService.createLesson(createLessonDto, user.id);
   }
 
+  @Patch('lesson-complete/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @ApiOperation({
+    summary: 'Complete a lesson',
+    description: 'Marks a lesson as complete and moves it to lesson history',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Lesson ID',
+    example: '56efa278-5d5d-40e5-b15b-649f0cc7408c',
+  })
+  @ApiBody({
+    type: LessonComplete,
+    description: 'Lesson completion data',
+    examples: {
+      example1: {
+        summary: 'Complete with feedback',
+        value: {
+          status: 'COMPLETED',
+          star: 'FIVE',
+          feedback: 'Great lesson, student showed excellent progress',
+        },
+      },
+      example2: {
+        summary: 'Complete without feedback',
+        value: {
+          status: 'COMPLETED',
+          star: 'FOUR',
+        },
+      },
+    },
+  })
+  lessonComplete(
+    @CurrentUser() teacher: IToken,
+    @Body() dto: LessonComplete,
+    @Param('id') lessonId: string,
+  ) {
+    return this.lessonService.lessonComplete(teacher.id, dto, lessonId);
+  }
   @Get('available')
   @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.STUDENT)
+  @AccessRoles(Roles.STUDENT, Roles.TEACHER)
   @ApiOperation({
     summary: "Barcha bo'sh darslarni ko'rish",
     description:
@@ -96,6 +140,8 @@ export class LessonController {
   }
 
   @Post(':id/book')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.STUDENT)
   @ApiOperation({
     summary: 'Darsni booking qilish (Student)',
     description: "Student bo'sh darsni o'ziga booking qiladi",
@@ -113,6 +159,7 @@ export class LessonController {
     description: 'Dars topilmadi',
   })
   bookLesson(@Param('id') id: string, @CurrentUser() user: IToken) {
+    console.log(user);
     return this.lessonService.bookLesson(id, user.id);
   }
 

@@ -6,9 +6,11 @@ import { Lesson } from 'src/core/entity/lesson.entity';
 import { Teacher } from 'src/core/entity/teacher.entity';
 import { Student } from 'src/core/entity/student.entity';
 import { GoogleCalendarModule } from './google-calendar.module';
+import { LessonHistoryModule } from '../lesson-history/lesson-history.module';
+import { LessonHistory } from 'src/core/entity/lessonHistory.entity';
 
 @Module({
-  imports: [GoogleCalendarModule, TypeOrmModule.forFeature([Lesson, Teacher, Student])],
+  imports: [GoogleCalendarModule, TypeOrmModule.forFeature([Lesson, Teacher, Student, LessonHistory])],
   controllers: [LessonController, ],
   providers: [LessonService],
 })

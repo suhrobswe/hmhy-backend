@@ -25,7 +25,7 @@ export class CreateLessonDto {
   name: string;
 
   @ApiProperty({
-    example: '2025-12-23T10:00:00Z',
+    example: '2025-12-31T10:00:00Z',
     description: 'Dars boshlanish vaqti ISO string formatda',
   })
   @IsDateString()
@@ -33,7 +33,7 @@ export class CreateLessonDto {
   startTime: string;
 
   @ApiProperty({
-    example: '2025-12-23T11:00:00Z',
+    example: '2025-12-31T11:00:00Z',
     description: 'Dars tugash vaqti ISO string formatda',
   })
   @IsDateString()

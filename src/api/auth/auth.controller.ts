@@ -15,7 +15,6 @@ import {
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { CookieGetter } from 'src/common/decorator/cookie-getter.decorator';
 import { AuthGuard } from 'src/common/guard/auth.guard';
-import { CheckIsActiveTeacherGuard } from 'src/common/guard/checkIsActive.guard';
 
 @ApiTags('Auth')
 @Controller()
@@ -24,8 +23,6 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Admin sign in' })
   @ApiBody({ type: AdminSignInDto })
-  @ApiResponse({ status: 201, description: 'Admin successfully signed in' })
-  @ApiResponse({ status: 400, description: 'Invalid credentials' })
   @Post('signin/admin')
   adminSignIn(
     @Body() dto: AdminSignInDto,
@@ -36,8 +33,6 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Teacher sign in' })
   @ApiBody({ type: TeacherSignInDto })
-  @ApiResponse({ status: 201, description: 'Teacher successfully signed in' })
-  @ApiResponse({ status: 400, description: 'Invalid credentials' })
   @Post('signin/teacher')
   teacherSignIn(
     @Body() dto: TeacherSignInDto,
@@ -46,23 +41,36 @@ export class AuthController {
     return this.authService.teacherSignIn(dto, res);
   }
 
+  @ApiOperation({ summary: 'Telegram Web App login (Production)' })
+  @ApiBody({ schema: { properties: { initData: { type: 'string' } } } })
+  @Post('telegram/login')
+  loginTelegram(@Body('initData') initData: string) {
+    return this.authService.telegramLogin(initData);
+  }
+
+  @ApiOperation({ summary: 'TEST UCHUN: Student ID orqali token olish' })
+  @ApiBody({ schema: { properties: { studentId: { type: 'string' } } } })
+  @Post('dev/login')
+  devLogin(
+    @Body('studentId') studentId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.devLogin(studentId, res);
+  }
+
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN, Roles.TEACHER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get new token using refresh token' })
-  @ApiResponse({ status: 200, description: 'New token issued successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('new-token')
   newToken(@CookieGetter('token') token: string) {
     return this.authService.newToken(token);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN, Roles.TEACHER)
+  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN, Roles.TEACHER, Roles.STUDENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sign out user' })
-  @ApiResponse({ status: 200, description: 'Signed out successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('signout')
   signOut(
     @CookieGetter('token') token: string,
