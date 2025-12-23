@@ -52,3 +52,21 @@ export enum SearchFieldEnum {
   SPECIFICATION = 'specification',
   DESCRIPTION = 'description',
 }
+
+export enum NotificationType {
+  LESSON_REMINDER = 'lesson_reminder',
+  LESSON_CANCELLED = 'lesson_cancelled',
+  LESSON_RESCHEDULED = 'lesson_rescheduled',
+  PAYMENT_SUCCESS = 'payment_success',
+  PAYMENT_FAILED = 'payment_failed',
+  PAYMENT_REMINDER = 'payment_reminder',
+  GENERAL = 'general',
+  ANNOUNCEMENT = 'announcement',
+}
+
+export enum NotificationChannel {
+  TELEGRAM = 'telegram',
+  EMAIL = 'email',
+  SMS = 'sms',
+  IN_APP = 'in_app',
+}

@@ -32,8 +32,8 @@ import type { IToken } from 'src/infrastructure/token/interface';
 import Redis from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { generateOtp } from 'src/common/util/otp-generator';
-import { MailService } from 'src/infrastructure/mail/mail.service';
 import passport from 'passport';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -41,7 +41,7 @@ export class TeacherController {
   constructor(
     private teacherService: TeacherService,
     private jwtService: JwtService,
-    private readonly mailService: MailService,
+    private readonly mailService: MailerService,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 

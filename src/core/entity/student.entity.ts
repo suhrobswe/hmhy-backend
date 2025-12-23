@@ -51,4 +51,6 @@ export class Student extends BaseEntity {
 
   @OneToMany(() => LessonHistory, (history) => history.student)
   history: LessonHistory[];
+  email: any;
+  length: number;
 }

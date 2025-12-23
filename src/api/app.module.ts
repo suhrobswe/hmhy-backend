@@ -10,6 +10,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { LessonModule } from './lesson/lesson.module';
 import { StudentModule } from './student/student.module';
 import { LessonHistoryModule } from './lesson-history/lesson-history.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { LessonHistoryModule } from './lesson-history/lesson-history.module';
     LessonHistoryModule,
     StudentModule,
     LessonHistoryModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

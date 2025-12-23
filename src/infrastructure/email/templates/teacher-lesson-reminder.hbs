@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-left: 4px solid #f5576c;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f5576c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏰ Lesson Reminder</h1>
+    </div>
+    <div class="content">
+        <h2>Hi {{teacherName}}! 👋</h2>
+        
+        <p><strong>You have a lesson starting soon!</strong></p>
+        
+        <div class="info-box">
+            <p><strong>📚 Subject:</strong> {{subject}}</p>
+            <p><strong>👨‍🎓 Student:</strong> {{studentName}}</p>
+            <p><strong>🕐 Time:</strong> {{startTime}}</p>
+            {{#if meetLink}}
+            <p><strong>🔗 Meeting Link:</strong> <a href="{{meetLink}}">Start Lesson</a></p>
+            {{/if}}
+        </div>
+        
+        <p><strong>Preparation checklist:</strong></p>
+        <ul>
+            <li>✅ Review lesson materials</li>
+            <li>🎤 Test your microphone and camera</li>
+            <li>📝 Prepare lesson notes</li>
+            <li>💡 Be ready 5 minutes early</li>
+        </ul>
+        
+        {{#if meetLink}}
+        <a href="{{meetLink}}" class="button">Start Lesson</a>
+        {{/if}}
+        
+        <p style="margin-top: 30px;">Have a great lesson! 🎓</p>
+        
+        <p>Best regards,<br><strong>HMHY Education Team</strong></p>
+    </div>
+    <div class="footer">
+        <p>© 2024 HMHY Education. All rights reserved.</p>
+    </div>
+</body>
+</html>
