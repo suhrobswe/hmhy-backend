@@ -72,10 +72,10 @@ export class Teacher extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   googleId: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'text', nullable: true })
   googleRefreshToken: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'text', nullable: true })
   googleAccessToken: string;
 
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })

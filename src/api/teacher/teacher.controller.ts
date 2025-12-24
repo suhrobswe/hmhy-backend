@@ -72,6 +72,8 @@ export class TeacherController {
           return res.status(401).json({ error: 'No user found', info });
         }
 
+        console.log(user);
+
         // Manually log in the user
         req.logIn(user, (loginErr) => {
           if (loginErr) {
