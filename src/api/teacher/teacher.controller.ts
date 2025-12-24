@@ -241,6 +241,14 @@ export class TeacherController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.teacherService.findOneById(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Patch('activate/:id')
   teacherActivate(@Param('id') id: string) {
     return this.teacherService.updateStatus(id);

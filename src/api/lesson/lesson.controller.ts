@@ -113,7 +113,31 @@ export class LessonController {
     return this.lessonService.getAvailableLessons();
   }
 
+  @Get()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles()
+  @ApiResponse({
+    status: 200,
+    description: "Bo'sh darslar ro'yxati",
+  })
+  findAll() {
+    return this.lessonService.findAll();
+  }
+
+  @Get('for-teacher')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @ApiResponse({
+    status: 200,
+    description: "Bo'sh darslar ro'yxati",
+  })
+  findAllForTeacher(@CurrentUser() user: IToken) {
+    return this.lessonService.findAll({ where: { teacherId: user.id } });
+  }
+
   @Get('my-lessons')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
   @ApiOperation({
     summary: 'Mening darslarim (Student)',
     description: "Student o'zi booking qilgan barcha darslarni ko'radi",
