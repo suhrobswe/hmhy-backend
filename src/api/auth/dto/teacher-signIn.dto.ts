@@ -4,11 +4,11 @@ import { ApiProperty } from '@nestjs/swagger';
 export class TeacherSignInDto {
   @IsEmail()
   @IsNotEmpty()
-  @ApiProperty({ example: 'suhrob@example.com', description: 'Teacher email' })
+  @ApiProperty({ example: 'suhrobabdurazzok@gmail.com', description: 'Teacher email' })
   email: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'suhrob', description: 'Teacher password' })
+  @ApiProperty({ example: 'Suhrob123!', description: 'Teacher password' })
   password: string;
 }

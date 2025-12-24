@@ -22,7 +22,9 @@ export class Lesson extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   studentId: string;
 
-  @ManyToOne(() => Teacher, (teacher) => teacher.lessonHistory)
+  @ManyToOne(() => Teacher, (teacher) => teacher.lessonHistory, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'teacherId' })
   teacher: Teacher;
 

@@ -86,13 +86,16 @@ export class Teacher extends BaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   lessons: string;
-
-  @OneToMany(() => LessonTemplate, (template) => template.teacher)
+  @OneToMany(() => LessonTemplate, (template) => template.teacher, {
+    cascade: true,
+  })
   lessonTemplates: LessonTemplate[];
 
-  @OneToMany(() => TeacherPayment, (payment) => payment.teacher)
+  @OneToMany(() => TeacherPayment, (payment) => payment.teacher, {
+    cascade: true,
+  })
   payments: TeacherPayment[];
 
-  @OneToMany(() => Lesson, (lesson) => lesson.teacher)
+  @OneToMany(() => Lesson, (lesson) => lesson.teacher, { cascade: true })
   lessonHistory: Lesson[];
 }

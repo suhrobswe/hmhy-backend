@@ -147,12 +147,26 @@ export class TeacherController {
         password: body.password,
       }),
       'EX',
-      300,
+      300, // 5 daqiqa amal qiladi
     );
 
-    // await this.mailService.sendOtp(body.email, otp); // buni tog'irlash kerak
+    // 👇 TO'G'IRLANGAN QISM:
+    await this.mailService.sendMail({
+      to: body.email, // Kimga yuborilishi
+      subject: 'Roʻyxatdan oʻtish uchun tasdiqlash kodi', // Xat mavzusi
+      // Agar template ishlatmasangiz, text yoki html dan foydalaning:
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
+          <h2>Tasdiqlash kodi</h2>
+          <p>Sizning ro'yxatdan o'tish kodingiz:</p>
+          <h1 style="color: #4CAF50;">${otp}</h1>
+          <p>Ushbu kod 5 daqiqa davomida amal qiladi.</p>
+        </div>
+      `,
+    });
 
-    return { message: 'OTP emailingizga yuborildi', otp: otp };
+    // Xavfsizlik yuzasidan javobda otp ni qaytarmaslik tavsiya etiladi (faqat test uchun qoldiring)
+    return { message: 'OTP emailingizga yuborildi' };
   }
 
   // ===================== VERIFY OTP =====================

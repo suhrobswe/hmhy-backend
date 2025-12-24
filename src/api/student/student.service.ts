@@ -38,7 +38,7 @@ export class StudentService extends BaseService<
     // this.initializeBot();
   }
 
-  // /** Type guard: ctx.from doimo mavjudligini ta'minlaydi */
+  /** Type guard: ctx.from doimo mavjudligini ta'minlaydi */
   // private assertFrom(
   //   ctx: Context,
   // ): asserts ctx is Context & { from: NonNullable<Context['from']> } {
