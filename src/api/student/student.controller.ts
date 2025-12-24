@@ -29,19 +29,61 @@ export class StudentController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   findAll() {
-    return this.studentService.findAll();
+    return this.studentService.findAll({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        tgUsername: true,
+        lessons: {
+          id: true,
+          name: true,
+          teacher: { fullName: true },
+          startTime: true,
+        },
+      },
+    });
   }
 
   @Get('me')
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.TEACHER, Roles.STUDENT)
   getMe(@CurrentUser() user: IToken) {
-    return this.studentService.findOneById(user.id);
+    return this.studentService.findOneById(user.id, {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        tgUsername: true,
+        lessons: {
+          id: true,
+          name: true,
+          teacher: { fullName: true },
+          startTime: true,
+        },
+      },
+    });
   }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.studentService.findOneById(id);
+    return this.studentService.findOneById(id, {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        tgUsername: true,
+        lessons: {
+          id: true,
+          name: true,
+          teacher: { fullName: true },
+          startTime: true,
+        },
+      },
+    });
   }
 
   @Delete(':id')

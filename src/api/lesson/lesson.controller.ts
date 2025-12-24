@@ -132,7 +132,26 @@ export class LessonController {
     description: "Bo'sh darslar ro'yxati",
   })
   findAllForTeacher(@CurrentUser() user: IToken) {
-    return this.lessonService.findAll({ where: { teacherId: user.id } });
+    return this.lessonService.findAll({
+      where: { teacherId: user.id },
+      select: {
+        id: true,
+        name: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        googleEventId: true,
+        googleMeetUrl: true,
+        price: true,
+        student: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          phoneNumber: true,
+          tgUsername: true,
+        },
+      },
+    });
   }
 
   @Get('my-lessons')
@@ -149,8 +168,6 @@ export class LessonController {
   getMyLessons(@CurrentUser() user: IToken) {
     return this.lessonService.getMyLessons(user.id);
   }
-
-
 
   @Post(':id/book')
   @UseGuards(AuthGuard, RolesGuard)
@@ -171,7 +188,10 @@ export class LessonController {
     status: 404,
     description: 'Dars topilmadi',
   })
-  bookLesson(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: IToken) {
+  bookLesson(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: IToken,
+  ) {
     return this.lessonService.bookLesson(id, user.id);
   }
 
@@ -184,7 +204,10 @@ export class LessonController {
     status: 200,
     description: 'Dars muvaffaqiyatli yangilandi',
   })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateLessonDto: UpdateLessonDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateLessonDto: UpdateLessonDto,
+  ) {
     return this.lessonService.updateLesson(id, updateLessonDto);
   }
 

@@ -17,6 +17,10 @@ import { ISuccess } from 'src/infrastructure/pagination/successResponse';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { EmailService } from 'src/infrastructure/email/email.service';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { generateOtp } from 'src/common/util/otp-generator';
 
 @Injectable()
 export class TeacherService extends BaseService<
@@ -27,6 +31,7 @@ export class TeacherService extends BaseService<
   constructor(
     @InjectRepository(Teacher) private readonly teacherRepo: TeacherRepository,
     @InjectRedis() private readonly redis: Redis,
+    private readonly mailService: EmailService,
     private readonly crypto: CryptoService,
   ) {
     super(teacherRepo);
@@ -63,25 +68,67 @@ export class TeacherService extends BaseService<
   async findTeacherByPhone(phoneNumber: string) {
     return await this.teacherRepo.findOne({ where: { phoneNumber } });
   }
+  async initiateGoogleRegistration(dto: SendOtpDto) {
+    const teacher = await this.findByEmail(dto.email);
+    if (!teacher) throw new BadRequestException('Email not found');
 
-  async saveOtpToRedis(phoneNumber: string, data: any) {
-    const key = `otp:google:${phoneNumber}`;
-    try {
-      await this.redis.set(key, JSON.stringify(data), 'EX', 120);
-    } catch (error) {
-      throw new InternalServerErrorException('Redis-ga saqlashda xatolik');
-    }
+    const phoneCheck = await this.findTeacherByPhone(dto.phoneNumber);
+    if (phoneCheck) throw new ConflictException('Phone number already exists');
+
+    const otp = generateOtp();
+    const redisData = {
+      otp,
+      phoneNumber: dto.phoneNumber,
+      password: dto.password,
+    };
+
+    await this.redis.set(
+      `otp:google:${dto.email}`,
+      JSON.stringify(redisData),
+      'EX',
+      300,
+    );
+
+    await this.mailService.sendEmail({
+      to: dto.email,
+      subject: 'Verify code',
+      html: this.generateHtmlTemplate(otp),
+    });
+
+    return { message: 'OTP emailingizga yuborildi' };
   }
 
-  async getOtpFromRedis(phoneNumber: string) {
-    const key = `otp:google:${phoneNumber}`;
-    const data = await this.redis.get(key);
-    return data ? JSON.parse(data) : null;
+  async verifyAndActivate(dto: VerifyOtpDto) {
+    const data = await this.redis.get(`otp:google:${dto.email}`);
+    if (!data) throw new BadRequestException('OTP muddati o‘tgan');
+
+    const parsed = JSON.parse(data);
+    if (parsed.otp !== dto.otp) throw new BadRequestException('OTP noto‘g‘ri');
+
+    // 4. Ustozni faollashtirish
+    const teacher = await this.activateTeacher(
+      dto.email,
+      parsed.phoneNumber,
+      parsed.password,
+    );
+
+    await this.redis.del(`otp:google:${dto.email}`);
+
+    return {
+      message: "Ro'yxatdan o'tish yakunlandi",
+      status: 'Pending Admin Approval',
+      teacherId: teacher.id,
+    };
   }
 
-  async deleteOtpFromRedis(phoneNumber: string) {
-    const key = `otp:google:${phoneNumber}`;
-    await this.redis.del(key);
+  private generateHtmlTemplate(otp: string): string {
+    return `
+      <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
+        <h2>Tasdiqlash kodi</h2>
+        <h1 style="color: #4CAF50;">${otp}</h1>
+        <p>Ushbu kod 5 daqiqa davomida amal qiladi.</p>
+      </div>
+    `;
   }
 
   async findCompleteGoogleTeacher(email: string) {

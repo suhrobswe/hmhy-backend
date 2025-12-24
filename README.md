@@ -1,98 +1,90 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+Help Me Help You (HMHY) 🚀
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<p align="center"> <a href="#" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="HMHY Logo" /></a> </p>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+<p align="center">A smart bridge between <b>Teachers</b> and <b>Students</b>. Register via Telegram, learn via Web!</p>
 
-## Description
+<p align="center"> <img src="https://img.shields.io/badge/Language-Uzbek%20%2F%20English-blue" alt="Language" /> <img src="https://img.shields.io/badge/Framework-NestJS-red" alt="Framework" /> <img src="https://img.shields.io/badge/Integration-Google%20Meet-green" alt="Google Meet" /> <img src="https://img.shields.io/badge/Platform-Telegram%20%26%20Web-lightblue" alt="Platform" /> </p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+🇺🇿 Loyiha haqida (O'zbekcha)
+Help Me Help You (HMHY) — bu ustozlar va o'quvchilarni bir-biriga bog'laydigan zamonaviy ta'lim ekotizimidir. Loyiha dars jarayonlarini avtomatlashtirish va masofaviy ta'limni osonlashtirish uchun yaratilgan.
 
-## Project setup
+✨ Asosiy imkoniyatlar:
+O'quvchilar uchun: Telegram bot orqali tezkor ro'yxatdan o'tish va qulay Web App interfeysi orqali ustoz topish.
 
-```bash
+Ustozlar uchun: Shaxsiy profil va darslar yaratish imkoniyati.
+
+Avtomatlashtirish: Ustoz dars yaratishi bilan tizim avtomatik ravishda Google Meet havolasini generatsiya qiladi.
+
+Oson ulanish: O'quvchi va ustoz o'rtasidagi aloqani soddalashtirilgan ish oqimi (workflow).
+
+🇺🇸 Description (English)
+Help Me Help You (HMHY) is a modern educational ecosystem that bridges the gap between teachers and students. The project is designed to automate lesson management and simplify remote learning.
+
+✨ Key Features:
+For Students: Quick registration via Telegram bot and finding mentors through a user-friendly Web App.
+
+For Teachers: Create personalized profiles and schedule lessons effortlessly.
+
+Automation: Upon lesson creation, the system automatically generates a Google Meet URL for the session.
+
+Seamless Connection: A simplified workflow to connect mentors with students in real-time.
+
+🛠 Project Setup
+Bash
+
+# install dependencies
+
 $ npm install
-```
+🚀 Running the app
+Bash
 
-## Compile and run the project
+# development mode
 
-```bash
-# development
 $ npm run start
 
-# watch mode
+# watch mode (hot reload)
+
 $ npm run start:dev
 
 # production mode
+
 $ npm run start:prod
-```
+🧪 Test
+Bash
 
-## Run tests
-
-```bash
 # unit tests
+
 $ npm run test
 
 # e2e tests
+
 $ npm run test:e2e
+🗺 Workflow / Ishlash tartibi
+Step 1: Student opens the Telegram Bot and completes registration.
 
-# test coverage
-$ npm run test:cov
-```
+Step 2: Student logs into the Web App to browse available teachers.
 
-## Deployment
+Step 3: Teacher creates a lesson in their dashboard.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Step 4: System triggers Google API to create a Google Meet link.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Step 5: Both parties receive the meeting URL and start the session.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+⚙️ Technologies Used
+Backend: NestJS (Node.js framework)
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Database: PostgreSQL / MongoDB
 
-## Resources
+Bot: Telegram Bot API
 
-Check out a few resources that may come in handy when working with NestJS:
+Integration: Google Calendar API (for Meet links)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Frontend: React.js / Next.js (Web App)
 
-## Support
+🤝 Support & License
+HMHY is an open-source project. If you find it helpful, please give it a ⭐!
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Author: [Ismingiz yoki Nickname]
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+License: MIT Licensed

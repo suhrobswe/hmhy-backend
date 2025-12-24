@@ -23,6 +23,8 @@ import { AuthGuard } from 'src/common/guard/auth.guard';
 import { RolesGuard } from 'src/common/guard/role.guard';
 import { Roles } from 'src/common/enum/index.enum';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
+import type { IToken } from 'src/infrastructure/token/interface';
+import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -81,7 +83,27 @@ export class AdminController {
   @AccessRoles(Roles.SUPER_ADMIN)
   @Get()
   findAll() {
-    return this.adminService.findAll();
+    return this.adminService.findAll({
+      select: {
+        id: true,
+        phoneNumber: true,
+        username: true,
+      },
+    });
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  getMe(@CurrentUser() user: IToken) {
+    return this.adminService.findOneById(user.id, {
+      select: {
+        id: true,
+        phoneNumber: true,
+        username: true,
+      },
+    });
   }
 
   @ApiOperation({ summary: 'Get admin by ID' })
@@ -109,7 +131,13 @@ export class AdminController {
   @AccessRoles(Roles.SUPER_ADMIN, 'ID')
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.findOneById(id);
+    return this.adminService.findOneById(id, {
+      select: {
+        id: true,
+        phoneNumber: true,
+        username: true,
+      },
+    });
   }
 
   @ApiOperation({ summary: 'Update admin by ID' })
@@ -137,7 +165,10 @@ export class AdminController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, 'ID')
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateAdminDto: UpdateAdminDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateAdminDto: UpdateAdminDto,
+  ) {
     return this.adminService.updateAdmin(updateAdminDto, id);
   }
 

@@ -38,7 +38,6 @@ export class StudentService extends BaseService<
     this.initializeBot();
   }
 
-  /** Type guard: ctx.from doimo mavjudligini ta'minlaydi */
   private assertFrom(
     ctx: Context,
   ): asserts ctx is Context & { from: NonNullable<Context['from']> } {
@@ -102,7 +101,6 @@ export class StudentService extends BaseService<
       }
     });
 
-    // Contact messages
     this.bot.on('contact', async (ctx) => {
       try {
         this.assertFrom(ctx);
@@ -132,12 +130,10 @@ export class StudentService extends BaseService<
       ctx.reply("Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
     });
 
-    // Launch bot
     this.bot.launch().then(() => {
       this.logger.log('Student registration bot started successfully');
     });
 
-    // Graceful shutdown
     process.once('SIGINT', () => this.bot.stop('SIGINT'));
     process.once('SIGTERM', () => this.bot.stop('SIGTERM'));
   }

@@ -6,8 +6,6 @@ import {
   Req,
   Res,
   UseGuards,
-  ConflictException,
-  BadRequestException,
   Patch,
   Param,
   Delete,
@@ -30,11 +28,7 @@ import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AuthGuard as AuthPassportGuard } from '@nestjs/passport';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import type { IToken } from 'src/infrastructure/token/interface';
-import Redis from 'ioredis';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import { generateOtp } from 'src/common/util/otp-generator';
 import passport from 'passport';
-import { MailerService } from '@nestjs-modules/mailer';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -42,8 +36,6 @@ export class TeacherController {
   constructor(
     private teacherService: TeacherService,
     private jwtService: JwtService,
-    private readonly mailService: MailerService,
-    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   // Google OAuth endpoints
@@ -125,64 +117,12 @@ export class TeacherController {
 
   @Post('google/send-otp')
   async sendOtp(@Body() body: SendOtpDto) {
-    const teacher = await this.teacherService.findByEmail(body.email);
-    if (!teacher) throw new BadRequestException('Email topilmadi');
-
-    const phoneCheck = await this.teacherService.findTeacherByPhone(
-      body.phoneNumber,
-    );
-    if (phoneCheck) throw new ConflictException('Telefon raqami band');
-
-    const otp = generateOtp();
-
-    await this.redis.set(
-      `otp:google:${body.email}`,
-      JSON.stringify({
-        otp,
-        phoneNumber: body.phoneNumber,
-        password: body.password,
-      }),
-      'EX',
-      300,
-    );
-
-    await this.mailService.sendMail({
-      to: body.email,
-      subject: 'Roʻyxatdan oʻtish uchun tasdiqlash kodi',
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
-          <h2>Tasdiqlash kodi</h2>
-          <p>Sizning ro'yxatdan o'tish kodingiz:</p>
-          <h1 style="color: #4CAF50;">${otp}</h1>
-          <p>Ushbu kod 5 daqiqa davomida amal qiladi.</p>
-        </div>
-      `,
-    });
-
-    return { message: 'OTP emailingizga yuborildi' };
+    return await this.teacherService.initiateGoogleRegistration(body);
   }
 
   @Post('google/verify-otp')
   async verifyOtp(@Body() body: VerifyOtpDto) {
-    const data = await this.redis.get(`otp:google:${body.email}`);
-    if (!data) throw new BadRequestException('OTP muddati o‘tgan');
-
-    const parsed = JSON.parse(data);
-    if (parsed.otp !== body.otp) throw new BadRequestException('OTP noto‘g‘ri');
-
-    const teacher = await this.teacherService.activateTeacher(
-      body.email,
-      parsed.phoneNumber,
-      parsed.password,
-    );
-
-    await this.redis.del(`otp:google:${body.email}`);
-
-    return {
-      message: "Ro'yxatdan o'tish yakunlandi",
-      status: 'Pending Admin Approval',
-      teacherId: teacher.id,
-    };
+    return await this.teacherService.verifyAndActivate(body);
   }
 
   @ApiBearerAuth()
@@ -226,7 +166,24 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get('applications')
   findAllApplications() {
-    return this.teacherService.findAll({ where: { isActive: false } });
+    return this.teacherService.findAll({
+      where: { isActive: false },
+      select: {
+        id: true,
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    });
   }
 
   @ApiBearerAuth()
@@ -234,7 +191,23 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.teacherService.findOneById(id);
+    return this.teacherService.findOneById(id, {
+      select: {
+        id: true,
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    });
   }
 
   @ApiBearerAuth()
@@ -276,6 +249,7 @@ export class TeacherController {
   getMe(@CurrentUser() user: IToken) {
     return this.teacherService.findOneById(user.id, {
       select: {
+        id: true,
         cardNumber: true,
         description: true,
         email: true,
