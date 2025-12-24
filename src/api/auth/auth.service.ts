@@ -111,10 +111,10 @@ export class AuthService {
     });
     if (!student) throw new BadRequestException('Student not found');
     const payload: IToken = { id: student.id, role: Roles.STUDENT };
-    const accessToken = await this.token.accessToken(payload)
-    const refreshToken = await this.token.refreshToken(payload)
-    await this.token.writeCookie(res, "token", refreshToken, 30)
-    return successRes({accessToken});
+    const accessToken = await this.token.accessToken(payload);
+    const refreshToken = await this.token.refreshToken(payload);
+    await this.token.writeCookie(res, 'token', refreshToken, 30);
+    return successRes({ accessToken });
   }
 
   async newToken(token: string) {
@@ -141,4 +141,4 @@ export class AuthService {
     res.clearCookie(tokenKey);
     return successRes({ message: 'Successfully logged out' });
   }
-} // <--- Klass shu yerda yopilishi shart!
+}

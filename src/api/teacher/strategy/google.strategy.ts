@@ -12,7 +12,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       callbackURL: config.GOOGLE_AUTH.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile', 'https://www.googleapis.com/auth/calendar'],
       accessType: 'offline',
-      prompt: 'consent', // Har doim refresh token olish uchun
+      prompt: 'consent',
     } as any);
   }
 
@@ -32,7 +32,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       accessToken,
       refreshToken,
     };
-
 
     done(null, user);
   }

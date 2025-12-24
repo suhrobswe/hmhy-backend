@@ -14,7 +14,7 @@ import { config } from 'src/config';
         transport: {
           host: config.MAIL.MAIL_HOST,
           port: config.MAIL.MAIL_PORT,
-          secure: false, // true for 465, false for other ports
+          secure: false,
           auth: {
             user: config.MAIL.MAIL_USER,
             pass: config.MAIL.MAIL_PASS,

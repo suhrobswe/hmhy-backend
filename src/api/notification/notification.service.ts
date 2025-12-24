@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Telegraf } from 'telegraf';
-import { Student } from '../../core/entity/student.entity'; // Importlarni tekshiring
-import { Lesson } from '../../core/entity/lesson.entity'; // Importlarni tekshiring
+import { Student } from '../../core/entity/student.entity';
+import { Lesson } from '../../core/entity/lesson.entity';
 import { config } from 'src/config';
 
 @Injectable()
@@ -31,13 +31,10 @@ export class NotificationService implements OnModuleInit {
     }
   }
 
-  // Debug uchun har daqiqada ishlaydi (Keyin EVERY_5_MINUTES ga qaytaramiz)
   @Cron(CronExpression.EVERY_MINUTE)
   async handleLessonReminders() {
     const now = new Date();
 
-    // 15 va 25 daqiqa oralig'idagi darslarni qidiramiz
-    // Masalan: Hozir 13:00 bo'lsa, 13:15 va 13:25 orasidagi darslar
     const startWindow = new Date(now.getTime() - 5 * 60000);
     const endWindow = new Date(now.getTime() + 20 * 60000);
 
@@ -52,15 +49,13 @@ export class NotificationService implements OnModuleInit {
         where: {
           startTime: Between(startWindow, endWindow),
         },
-        relations: ['student'], // Student ma'lumotlari kerak
+        relations: ['student'],
       });
 
       this.logger.log(
         `📊 Oraliqqa tushgan darslar soni: ${upcomingLessons.length}`,
       );
 
-      // DEBUG: Agar dars topilmasa, yaqin 2 soatdagi darslarni chiqarib ko'ramiz
-      // Bu vaqt farqini (Timezone) aniqlashga yordam beradi
       if (upcomingLessons.length === 0) {
         this.logger.warn(
           '⚠️ Oraliqda dars topilmadi. Bazadagi yaqin 2 soatlik darslarni tekshiramiz...',
@@ -91,9 +86,7 @@ export class NotificationService implements OnModuleInit {
         }
       }
 
-      // Topilgan darslarga xabar yuborish
       for (const lesson of upcomingLessons) {
-        // ManyToOne bo'lgani uchun lesson.student bitta obyekt
         const student = lesson.student;
 
         if (!student) {

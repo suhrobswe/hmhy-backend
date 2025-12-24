@@ -49,7 +49,6 @@ export class TeacherController {
   @Get('google')
   @ApiOperation({ summary: 'Google OAuth login' })
   googleLogin(@Req() req, @Res() res) {
-    // Custom authenticate with prompt=consent to force refresh token
     passport.authenticate(
       'google',
       {
@@ -74,20 +73,18 @@ export class TeacherController {
 
         console.log(user);
 
-        // Manually log in the user
         req.logIn(user, (loginErr) => {
           if (loginErr) {
             return res
               .status(500)
               .json({ error: 'Login failed', details: loginErr });
           }
-          return res.redirect('/dashboard'); // yoki kerakli joyga yo'naltiring
+          return res.redirect('/dashboard');
         });
       },
     )(req, res);
   }
 
-  // ===================== GOOGLE CALLBACK =====================
   @Get('google/callback')
   @UseGuards(AuthPassportGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
@@ -117,7 +114,6 @@ export class TeacherController {
         );
       }
 
-      // Agar ro'yxat to'liq emas bo'lsa
       return res.redirect(
         `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
       );
@@ -126,7 +122,6 @@ export class TeacherController {
     }
   }
 
-  // ===================== SEND OTP =====================
   @Post('google/send-otp')
   async sendOtp(@Body() body: SendOtpDto) {
     const teacher = await this.teacherService.findByEmail(body.email);
@@ -147,14 +142,12 @@ export class TeacherController {
         password: body.password,
       }),
       'EX',
-      300, // 5 daqiqa amal qiladi
+      300,
     );
 
-    // 👇 TO'G'IRLANGAN QISM:
     await this.mailService.sendMail({
-      to: body.email, // Kimga yuborilishi
-      subject: 'Roʻyxatdan oʻtish uchun tasdiqlash kodi', // Xat mavzusi
-      // Agar template ishlatmasangiz, text yoki html dan foydalaning:
+      to: body.email,
+      subject: 'Roʻyxatdan oʻtish uchun tasdiqlash kodi',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
           <h2>Tasdiqlash kodi</h2>
@@ -165,11 +158,9 @@ export class TeacherController {
       `,
     });
 
-    // Xavfsizlik yuzasidan javobda otp ni qaytarmaslik tavsiya etiladi (faqat test uchun qoldiring)
     return { message: 'OTP emailingizga yuborildi' };
   }
 
-  // ===================== VERIFY OTP =====================
   @Post('google/verify-otp')
   async verifyOtp(@Body() body: VerifyOtpDto) {
     const data = await this.redis.get(`otp:google:${body.email}`);
@@ -193,7 +184,6 @@ export class TeacherController {
     };
   }
 
-  // ===================== CRUD =====================
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)

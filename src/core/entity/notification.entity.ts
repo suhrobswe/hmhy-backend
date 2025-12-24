@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from './base.entity'; // Adjust path if needed
+import { BaseEntity } from './base.entity';
 import { Student } from './student.entity';
 import { Lesson } from './lesson.entity';
 import {
@@ -35,7 +35,7 @@ export class Notification extends BaseEntity {
   @Column({ name: 'lesson_id', nullable: true })
   lessonId: string;
 
-  @ManyToOne(() => Lesson, (lesson) => lesson.notifications) // Matches the OneToMany in Lesson
+  @ManyToOne(() => Lesson, (lesson) => lesson.notifications)
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 

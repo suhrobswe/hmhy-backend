@@ -7,11 +7,9 @@ import { Lesson } from '../../core/entity/lesson.entity';
 import { Student } from '../../core/entity/student.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([LessonHistory, Lesson, Student])
-  ],
+  imports: [TypeOrmModule.forFeature([LessonHistory, Lesson, Student])],
   controllers: [LessonHistoryController],
   providers: [LessonHistoryService],
-  exports: [LessonHistoryService]
+  exports: [LessonHistoryService],
 })
 export class LessonHistoryModule {}

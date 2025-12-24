@@ -33,7 +33,10 @@ export class EmailService {
 
       this.logger.log(`Welcome email sent to ${data.email}`);
     } catch (error) {
-      this.logger.error(`Failed to send welcome email to ${data.email}:`, error);
+      this.logger.error(
+        `Failed to send welcome email to ${data.email}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -65,7 +68,10 @@ export class EmailService {
 
       this.logger.log(`Lesson reminder sent to ${data.email}`);
     } catch (error) {
-      this.logger.error(`Failed to send lesson reminder to ${data.email}:`, error);
+      this.logger.error(
+        `Failed to send lesson reminder to ${data.email}:`,
+        error,
+      );
     }
   }
 
@@ -96,7 +102,10 @@ export class EmailService {
 
       this.logger.log(`Payment confirmation sent to ${data.email}`);
     } catch (error) {
-      this.logger.error(`Failed to send payment confirmation to ${data.email}:`, error);
+      this.logger.error(
+        `Failed to send payment confirmation to ${data.email}:`,
+        error,
+      );
     }
   }
 
@@ -125,7 +134,10 @@ export class EmailService {
 
       this.logger.log(`Teacher payment notification sent to ${data.email}`);
     } catch (error) {
-      this.logger.error(`Failed to send teacher payment notification to ${data.email}:`, error);
+      this.logger.error(
+        `Failed to send teacher payment notification to ${data.email}:`,
+        error,
+      );
     }
   }
 
@@ -176,57 +188,63 @@ export class EmailService {
   }
 
   async sendTeacherLessonReminder(data: {
-  email: string;
-  teacherName: string;
-  studentName: string;
-  subject: string;
-  startTime: Date;
-  meetLink?: string;
-}): Promise<void> {
-  try {
-    await this.mailerService.sendMail({
-      to: data.email,
-      subject: `Lesson Reminder: ${data.subject} 📚`,
-      template: './teacher-lesson-reminder',
-      context: {
-        teacherName: data.teacherName,
-        studentName: data.studentName,
-        subject: data.subject,
-        startTime: data.startTime.toLocaleString('uz-UZ'),
-        meetLink: data.meetLink,
-      },
-    });
+    email: string;
+    teacherName: string;
+    studentName: string;
+    subject: string;
+    startTime: Date;
+    meetLink?: string;
+  }): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: data.email,
+        subject: `Lesson Reminder: ${data.subject} 📚`,
+        template: './teacher-lesson-reminder',
+        context: {
+          teacherName: data.teacherName,
+          studentName: data.studentName,
+          subject: data.subject,
+          startTime: data.startTime.toLocaleString('uz-UZ'),
+          meetLink: data.meetLink,
+        },
+      });
 
-    this.logger.log(`Teacher lesson reminder sent to ${data.email}`);
-  } catch (error) {
-    this.logger.error(`Failed to send teacher lesson reminder to ${data.email}:`, error);
+      this.logger.log(`Teacher lesson reminder sent to ${data.email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send teacher lesson reminder to ${data.email}:`,
+        error,
+      );
+    }
   }
-}
 
-/**
- * Teacher'ga welcome email
- */
-async sendTeacherWelcomeEmail(data: {
-  email: string;
-  firstName: string;
-  lastName: string;
-}): Promise<void> {
-  try {
-    await this.mailerService.sendMail({
-      to: data.email,
-      subject: 'Welcome to HMHY Education! 🎓',
-      template: './teacher-welcome',
-      context: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        appUrl: this.configService.get('APP_URL'),
-      },
-    });
+  /**
+   * Teacher'ga welcome email
+   */
+  async sendTeacherWelcomeEmail(data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: data.email,
+        subject: 'Welcome to HMHY Education! 🎓',
+        template: './teacher-welcome',
+        context: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          appUrl: this.configService.get('APP_URL'),
+        },
+      });
 
-    this.logger.log(`Teacher welcome email sent to ${data.email}`);
-  } catch (error) {
-    this.logger.error(`Failed to send teacher welcome email to ${data.email}:`, error);
-    throw error;
+      this.logger.log(`Teacher welcome email sent to ${data.email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send teacher welcome email to ${data.email}:`,
+        error,
+      );
+      throw error;
+    }
   }
-}
 }

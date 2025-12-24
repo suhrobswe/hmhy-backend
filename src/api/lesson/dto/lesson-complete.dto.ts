@@ -10,7 +10,7 @@ export class LessonComplete {
     enum: LessonStatus,
   })
   @IsEnum(LessonStatus)
-  @Transform(({ value }) => value?.toString().toUpperCase()) // String'ga aylantirish
+  @Transform(({ value }) => value?.toString().toUpperCase())
   status: LessonStatus;
 
   @ApiPropertyOptional({
@@ -21,7 +21,7 @@ export class LessonComplete {
   })
   @IsOptional()
   @IsEnum(Rating)
-  @Transform(({ value }) => value?.toString().toUpperCase()) // String'ga aylantirish
+  @Transform(({ value }) => value?.toString().toUpperCase())
   star?: Rating;
 
   @ApiPropertyOptional({

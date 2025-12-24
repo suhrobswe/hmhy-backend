@@ -8,23 +8,26 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
-import { NotificationChannel, NotificationType } from 'src/common/enum/index.enum';
+import {
+  NotificationChannel,
+  NotificationType,
+} from 'src/common/enum/index.enum';
 
 export class SendNotificationDto {
-  @ApiProperty({ 
-    description: 'Student IDs (array for bulk send)', 
+  @ApiProperty({
+    description: 'Student IDs (array for bulk send)',
     type: [String],
-    example: ['uuid1', 'uuid2'] 
+    example: ['uuid1', 'uuid2'],
   })
   @IsArray()
   @IsUUID('4', { each: true })
   @IsNotEmpty()
   studentIds: string[];
 
-  @ApiProperty({ 
-    enum: NotificationType, 
+  @ApiProperty({
+    enum: NotificationType,
     description: 'Notification type',
-    example: NotificationType.ANNOUNCEMENT 
+    example: NotificationType.ANNOUNCEMENT,
   })
   @IsEnum(NotificationType)
   @IsNotEmpty()
@@ -42,10 +45,10 @@ export class SendNotificationDto {
   @MaxLength(1000)
   message: string;
 
-  @ApiProperty({ 
-    enum: NotificationChannel, 
+  @ApiProperty({
+    enum: NotificationChannel,
     description: 'Notification channel',
-    default: NotificationChannel.TELEGRAM 
+    default: NotificationChannel.TELEGRAM,
   })
   @IsEnum(NotificationChannel)
   @IsOptional()

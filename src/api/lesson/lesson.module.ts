@@ -10,8 +10,11 @@ import { LessonHistoryModule } from '../lesson-history/lesson-history.module';
 import { LessonHistory } from 'src/core/entity/lessonHistory.entity';
 
 @Module({
-  imports: [GoogleCalendarModule, TypeOrmModule.forFeature([Lesson, Teacher, Student, LessonHistory])],
-  controllers: [LessonController, ],
+  imports: [
+    GoogleCalendarModule,
+    TypeOrmModule.forFeature([Lesson, Teacher, Student, LessonHistory]),
+  ],
+  controllers: [LessonController],
   providers: [LessonService],
 })
 export class LessonModule {}

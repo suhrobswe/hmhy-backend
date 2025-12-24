@@ -48,13 +48,7 @@ export class LessonService extends BaseService<
     super(lessonRepo);
   }
 
-  /**
-   * Teacher yangi dars yaratadi (studentisiz)
-   */
   async createLesson(dto: CreateLessonDto, teacherId: string): Promise<Lesson> {
-    // 1. Vaqtni Toshkent vaqti deb tahlil qilish (Parsing)
-    // dayjs.tz() kiritilgan "15:10"ni Toshkentniki deb oladi va uni UTC ga o'giradi
-    // .tz() funksiyasiga formatni ko'rsatib o'tamiz (Z ni hisobga olmasligi uchun)
     const startTime = dayjs
       .tz(dto.startTime.replace('Z', ''), 'Asia/Tashkent')
       .toDate();
@@ -63,7 +57,6 @@ export class LessonService extends BaseService<
       .toDate();
     const now = new Date();
 
-    // 2. Mantiqiy tekshiruvlar
     if (startTime >= endTime) {
       throw new BadRequestException(
         "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak",
@@ -76,7 +69,6 @@ export class LessonService extends BaseService<
       );
     }
 
-    // 3. O'qituvchini topish va Google tokenlarini tekshirish
     const teacher = await this.teacherRepo.findOne({
       where: { id: teacherId },
     });
@@ -86,7 +78,6 @@ export class LessonService extends BaseService<
       throw new BadRequestException("Google Calendar ulangan bo'lishi shart");
     }
 
-    // 4. Bandlikni tekshirish (Aynan o'sha vaqt oralig'ida dars bormi?)
     const conflictingLesson = await this.lessonRepo.findOne({
       where: {
         teacherId: teacherId,
@@ -101,7 +92,6 @@ export class LessonService extends BaseService<
     try {
       const calendar = this.calendarService.getClient(teacher);
 
-      // 5. Google Calendar-ga yuborish
       const event = await calendar.events.insert({
         calendarId: 'primary',
         conferenceDataVersion: 1,
@@ -109,7 +99,7 @@ export class LessonService extends BaseService<
           summary: `Dars: ${dto.name}`,
           description: 'Dars uchun Google Meet havolasi',
           start: {
-            dateTime: startTime.toISOString(), // Masalan: 2025-12-24T10:10:00.000Z (UTC)
+            dateTime: startTime.toISOString(),
             timeZone: 'Asia/Tashkent',
           },
           end: {
@@ -125,7 +115,6 @@ export class LessonService extends BaseService<
         },
       });
 
-      // 6. DB-ga saqlash
       const lesson = this.lessonRepo.create({
         name: dto.name,
         startTime: startTime,
@@ -143,14 +132,11 @@ export class LessonService extends BaseService<
       throw new BadRequestException(`Xatolik: ${error.message}`);
     }
   }
-  // lesson.service.ts
-  // lesson.service.ts
   async lessonComplete(
     teacherId: string,
     dto: LessonComplete,
     lessonId: string,
   ) {
-    // Lessonni topish
     const lesson = await this.lessonRepo.findOne({
       where: { id: lessonId },
     });
@@ -159,18 +145,15 @@ export class LessonService extends BaseService<
       throw new NotFoundException('Lesson not found');
     }
 
-    // Teacher tegishliligini tekshirish
     if (lesson.teacherId !== teacherId) {
       throw new ForbiddenException('You can only complete your own lessons');
     }
 
-    // Agar allaqachon completed bo'lsa
     if (lesson.status === LessonStatus.COMPLETED) {
       throw new BadRequestException('Lesson is already completed');
     }
 
     return await this.lessonRepo.manager.transaction(async (manager) => {
-      // LessonHistory yaratish - faqat schemadagi maydonlar
       const lessonHistory = await manager.save(LessonHistory, {
         lessonId: lessonId,
         star: dto.star || Rating.FIVE,
@@ -179,7 +162,6 @@ export class LessonService extends BaseService<
         studentId: lesson.studentId,
       });
 
-      // Lessonni o'chirish
       await manager.delete(Lesson, lessonId);
 
       return successRes({
@@ -188,11 +170,8 @@ export class LessonService extends BaseService<
       });
     });
   }
-  /**
-   * Student darsni booking qiladi
-   */
+
   async bookLesson(lessonId: string, studentId: string): Promise<Lesson> {
-    // Find lesson
     const lesson = await this.lessonRepo.findOne({
       where: { id: lessonId },
       relations: ['teacher'],
@@ -202,7 +181,6 @@ export class LessonService extends BaseService<
       throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
     }
 
-    // Check if lesson is available
     if (lesson.status !== LessonStatus.AVAILABLE) {
       throw new BadRequestException('Lesson is not available for booking');
     }
@@ -211,7 +189,6 @@ export class LessonService extends BaseService<
       throw new BadRequestException('Lesson is already booked');
     }
 
-    // Find student
     const student = await this.studentRepo.findOne({
       where: { id: studentId },
     });
@@ -219,7 +196,6 @@ export class LessonService extends BaseService<
       throw new NotFoundException(`Student with ID ${studentId} not found`);
     }
 
-    // Check if student has conflicting lessons
     const conflictingLesson = await this.lessonRepo.findOne({
       where: {
         studentId: studentId,
@@ -232,7 +208,6 @@ export class LessonService extends BaseService<
     }
 
     try {
-      // Update Google Calendar event with student info
       if (lesson.googleEventId && lesson.teacher) {
         const calendar = this.calendarService.getClient(lesson.teacher);
 
@@ -245,7 +220,6 @@ export class LessonService extends BaseService<
         });
       }
 
-      // Update lesson with student
       lesson.studentId = studentId;
       lesson.student = student;
       lesson.status = LessonStatus.BOOKED;
@@ -257,9 +231,6 @@ export class LessonService extends BaseService<
     }
   }
 
-  /**
-   * Darsni yangilash
-   */
   async updateLesson(id: string, dto: UpdateLessonDto): Promise<Lesson> {
     const lesson = await this.lessonRepo.findOne({
       where: { id },
@@ -270,10 +241,7 @@ export class LessonService extends BaseService<
       throw new NotFoundException(`Dars topilmadi (ID: ${id})`);
     }
 
-    // Vaqt yangilanayotgan bo'lsa
     if (dto.startTime || dto.endTime) {
-      // 1. Yangi vaqtlarni Toshkent vaqti deb parse qilamiz
-      // Agar dto da kelmasa, bazadagi mavjud vaqtni olamiz
       const startTime = dto.startTime
         ? dayjs.tz(dto.startTime.replace('Z', ''), 'Asia/Tashkent').toDate()
         : lesson.startTime;
@@ -282,14 +250,12 @@ export class LessonService extends BaseService<
         ? dayjs.tz(dto.endTime.replace('Z', ''), 'Asia/Tashkent').toDate()
         : lesson.endTime;
 
-      // 2. Mantiqiy tekshiruv
       if (startTime >= endTime) {
         throw new BadRequestException(
           'Tugash vaqti boshlanish vaqtidan keyin bolishi kerak',
         );
       }
 
-      // 3. Google Calendar yangilash
       if (lesson.googleEventId && lesson.teacher) {
         try {
           const calendar = this.calendarService.getClient(lesson.teacher);
@@ -299,7 +265,7 @@ export class LessonService extends BaseService<
             eventId: lesson.googleEventId,
             requestBody: {
               start: {
-                dateTime: startTime.toISOString(), // UTC formatida ketadi
+                dateTime: startTime.toISOString(),
                 timeZone: 'Asia/Tashkent',
               },
               end: {
@@ -319,19 +285,14 @@ export class LessonService extends BaseService<
       lesson.endTime = endTime;
     }
 
-    // Boshqa maydonlarni yangilash
     if (dto.name) lesson.name = dto.name;
     if (dto.status) lesson.status = dto.status;
     if (dto.price !== undefined) lesson.price = dto.price;
     if (dto.isPaid !== undefined) lesson.isPaid = dto.isPaid;
 
-    // Agar dto da studentId kelsa, uni ham biriktirib qo'ying (Notification ishlashi uchun)
-
     return await this.lessonRepo.save(lesson);
   }
-  /**
-   * Darsni o'chirish
-   */
+
   async deleteLesson(id: string): Promise<void> {
     const lesson = await this.lessonRepo.findOne({
       where: { id },
@@ -342,7 +303,6 @@ export class LessonService extends BaseService<
       throw new NotFoundException(`Lesson with ID ${id} not found`);
     }
 
-    // Delete Google Calendar event
     if (lesson.googleEventId && lesson.teacher) {
       try {
         const calendar = this.calendarService.getClient(lesson.teacher);
@@ -352,16 +312,12 @@ export class LessonService extends BaseService<
         });
       } catch (error) {
         console.error('Failed to delete Google Calendar event:', error.message);
-        // Continue with lesson deletion even if Calendar deletion fails
       }
     }
 
     await this.lessonRepo.remove(lesson);
   }
 
-  /**
-   * Barcha bo'sh darslarni olish (studentlar uchun)
-   */
   async getAvailableLessons(): Promise<Lesson[]> {
     return await this.lessonRepo.find({
       where: {
@@ -372,9 +328,6 @@ export class LessonService extends BaseService<
     });
   }
 
-  /**
-   * Student o'z darslarini ko'radi
-   */
   async getMyLessons(studentId: string): Promise<Lesson[]> {
     return await this.lessonRepo.find({
       where: { studentId },
@@ -383,9 +336,6 @@ export class LessonService extends BaseService<
     });
   }
 
-  /**
-   * Teacher o'z darslarini ko'radi
-   */
   async getTeacherLessons(teacherId: string): Promise<Lesson[]> {
     return await this.lessonRepo.find({
       where: { teacherId },
