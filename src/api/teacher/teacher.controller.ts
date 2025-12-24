@@ -278,10 +278,10 @@ export class TeacherController {
     return this.teacherService.delete(id);
   }
 
+  @Get('me')
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.TEACHER)
-  @Get('me')
   getMe(@CurrentUser() user: IToken) {
     return this.teacherService.findOneById(user.id, {
       select: {

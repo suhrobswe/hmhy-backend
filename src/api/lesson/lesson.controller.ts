@@ -52,7 +52,6 @@ export class LessonController {
     @Body() createLessonDto: CreateLessonDto,
     @CurrentUser() user: IToken,
   ) {
-    // console.log(user);
     return this.lessonService.createLesson(createLessonDto, user.id);
   }
 
@@ -183,7 +182,6 @@ export class LessonController {
     description: 'Dars topilmadi',
   })
   bookLesson(@Param('id') id: string, @CurrentUser() user: IToken) {
-    console.log(user);
     return this.lessonService.bookLesson(id, user.id);
   }
 

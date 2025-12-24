@@ -46,7 +46,6 @@ export class AdminService
       });
 
       await this.adminRepo.save(superAdmin);
-      console.log(`Super Admin created`);
     }
   }
 

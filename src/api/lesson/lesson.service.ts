@@ -21,6 +21,12 @@ import { w } from 'node_modules/@faker-js/faker/dist/airline-DF6RqYmq';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { LessonHistory } from 'src/core/entity/lessonHistory.entity';
 import type { LessonHistoryRepository } from 'src/core/repository/lessonHistory.repository';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class LessonService extends BaseService<
@@ -46,34 +52,41 @@ export class LessonService extends BaseService<
    * Teacher yangi dars yaratadi (studentisiz)
    */
   async createLesson(dto: CreateLessonDto, teacherId: string): Promise<Lesson> {
-    // Validate time range
-    const startTime = new Date(dto.startTime);
-    const endTime = new Date(dto.endTime);
+    // 1. Vaqtni Toshkent vaqti deb tahlil qilish (Parsing)
+    // dayjs.tz() kiritilgan "15:10"ni Toshkentniki deb oladi va uni UTC ga o'giradi
+    // .tz() funksiyasiga formatni ko'rsatib o'tamiz (Z ni hisobga olmasligi uchun)
+    const startTime = dayjs
+      .tz(dto.startTime.replace('Z', ''), 'Asia/Tashkent')
+      .toDate();
+    const endTime = dayjs
+      .tz(dto.endTime.replace('Z', ''), 'Asia/Tashkent')
+      .toDate();
+    const now = new Date();
 
+    // 2. Mantiqiy tekshiruvlar
     if (startTime >= endTime) {
-      throw new BadRequestException('End time must be after start time');
-    }
-
-    if (startTime < new Date()) {
-      throw new BadRequestException('Start time cannot be in the past');
-    }
-
-    // Find teacher (current user)
-    const teacher = await this.teacherRepo.findOne({
-      where: { id: teacherId },
-    });
-    if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
-    }
-
-    // Validate Google Calendar credentials
-    if (!teacher.googleAccessToken || !teacher.googleRefreshToken) {
       throw new BadRequestException(
-        'Teacher has not connected Google Calendar',
+        "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak",
       );
     }
 
-    // Check for scheduling conflicts (teacher already has a lesson at this time)
+    if (startTime < now) {
+      throw new BadRequestException(
+        "O'tmishdagi vaqtga dars belgilab bo'lmaydi",
+      );
+    }
+
+    // 3. O'qituvchini topish va Google tokenlarini tekshirish
+    const teacher = await this.teacherRepo.findOne({
+      where: { id: teacherId },
+    });
+    if (!teacher) throw new NotFoundException(`O'qituvchi topilmadi`);
+
+    if (!teacher.googleAccessToken || !teacher.googleRefreshToken) {
+      throw new BadRequestException("Google Calendar ulangan bo'lishi shart");
+    }
+
+    // 4. Bandlikni tekshirish (Aynan o'sha vaqt oralig'ida dars bormi?)
     const conflictingLesson = await this.lessonRepo.findOne({
       where: {
         teacherId: teacherId,
@@ -82,21 +95,21 @@ export class LessonService extends BaseService<
     });
 
     if (conflictingLesson) {
-      throw new BadRequestException('You already have a lesson at this time');
+      throw new BadRequestException('Bu vaqtda sizda boshqa dars mavjud');
     }
 
     try {
-      // Create Google Calendar event
       const calendar = this.calendarService.getClient(teacher);
 
+      // 5. Google Calendar-ga yuborish
       const event = await calendar.events.insert({
         calendarId: 'primary',
         conferenceDataVersion: 1,
         requestBody: {
-          summary: `Lesson: ${dto.name}`,
-          description: 'Available lesson slot for students to book',
+          summary: `Dars: ${dto.name}`,
+          description: 'Dars uchun Google Meet havolasi',
           start: {
-            dateTime: startTime.toISOString(),
+            dateTime: startTime.toISOString(), // Masalan: 2025-12-24T10:10:00.000Z (UTC)
             timeZone: 'Asia/Tashkent',
           },
           end: {
@@ -105,25 +118,18 @@ export class LessonService extends BaseService<
           },
           conferenceData: {
             createRequest: {
-              requestId: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+              requestId: `lesson-${Date.now()}`,
               conferenceSolutionKey: { type: 'hangoutsMeet' },
             },
-          },
-          reminders: {
-            useDefault: false,
-            overrides: [
-              { method: 'email', minutes: 24 * 60 }, // 1 day before
-              { method: 'popup', minutes: 30 }, // 30 minutes before
-            ],
           },
         },
       });
 
-      // Create lesson in database (without student initially)
+      // 6. DB-ga saqlash
       const lesson = this.lessonRepo.create({
         name: dto.name,
-        startTime,
-        endTime,
+        startTime: startTime,
+        endTime: endTime,
         price: dto.price,
         status: dto.status ?? LessonStatus.AVAILABLE,
         isPaid: dto.isPaid ?? false,
@@ -132,25 +138,9 @@ export class LessonService extends BaseService<
         googleEventId: event.data.id ?? undefined,
       });
 
-      // Assign teacher relation
-      lesson.teacher = teacher;
-
       return await this.lessonRepo.save(lesson);
-    } catch (error) {
-      // Handle Google Calendar API errors
-      if (error.code === 401) {
-        throw new BadRequestException(
-          'Google Calendar authorization expired. Please reconnect.',
-        );
-      }
-      if (error.code === 403) {
-        throw new BadRequestException(
-          'Insufficient permissions for Google Calendar',
-        );
-      }
-      throw new BadRequestException(
-        `Failed to create lesson: ${error.message}`,
-      );
+    } catch (error: any) {
+      throw new BadRequestException(`Xatolik: ${error.message}`);
     }
   }
   // lesson.service.ts
@@ -178,9 +168,6 @@ export class LessonService extends BaseService<
     if (lesson.status === LessonStatus.COMPLETED) {
       throw new BadRequestException('Lesson is already completed');
     }
-
-          console.log(teacherId, lesson);
-
 
     return await this.lessonRepo.manager.transaction(async (manager) => {
       // LessonHistory yaratish - faqat schemadagi maydonlar
@@ -280,20 +267,29 @@ export class LessonService extends BaseService<
     });
 
     if (!lesson) {
-      throw new NotFoundException(`Lesson with ID ${id} not found`);
+      throw new NotFoundException(`Dars topilmadi (ID: ${id})`);
     }
 
-    // If time is being updated, validate and update Google Calendar
+    // Vaqt yangilanayotgan bo'lsa
     if (dto.startTime || dto.endTime) {
+      // 1. Yangi vaqtlarni Toshkent vaqti deb parse qilamiz
+      // Agar dto da kelmasa, bazadagi mavjud vaqtni olamiz
       const startTime = dto.startTime
-        ? new Date(dto.startTime)
+        ? dayjs.tz(dto.startTime.replace('Z', ''), 'Asia/Tashkent').toDate()
         : lesson.startTime;
-      const endTime = dto.endTime ? new Date(dto.endTime) : lesson.endTime;
 
+      const endTime = dto.endTime
+        ? dayjs.tz(dto.endTime.replace('Z', ''), 'Asia/Tashkent').toDate()
+        : lesson.endTime;
+
+      // 2. Mantiqiy tekshiruv
       if (startTime >= endTime) {
-        throw new BadRequestException('End time must be after start time');
+        throw new BadRequestException(
+          'Tugash vaqti boshlanish vaqtidan keyin bolishi kerak',
+        );
       }
 
+      // 3. Google Calendar yangilash
       if (lesson.googleEventId && lesson.teacher) {
         try {
           const calendar = this.calendarService.getClient(lesson.teacher);
@@ -303,7 +299,7 @@ export class LessonService extends BaseService<
             eventId: lesson.googleEventId,
             requestBody: {
               start: {
-                dateTime: startTime.toISOString(),
+                dateTime: startTime.toISOString(), // UTC formatida ketadi
                 timeZone: 'Asia/Tashkent',
               },
               end: {
@@ -312,9 +308,9 @@ export class LessonService extends BaseService<
               },
             },
           });
-        } catch (error) {
+        } catch (error: any) {
           throw new BadRequestException(
-            `Failed to update Google Calendar event: ${error.message}`,
+            `Google Calendar yangilashda xatolik: ${error.message}`,
           );
         }
       }
@@ -323,15 +319,16 @@ export class LessonService extends BaseService<
       lesson.endTime = endTime;
     }
 
-    // Update other fields
+    // Boshqa maydonlarni yangilash
     if (dto.name) lesson.name = dto.name;
     if (dto.status) lesson.status = dto.status;
     if (dto.price !== undefined) lesson.price = dto.price;
     if (dto.isPaid !== undefined) lesson.isPaid = dto.isPaid;
 
+    // Agar dto da studentId kelsa, uni ham biriktirib qo'ying (Notification ishlashi uchun)
+
     return await this.lessonRepo.save(lesson);
   }
-
   /**
    * Darsni o'chirish
    */
