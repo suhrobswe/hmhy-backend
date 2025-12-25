@@ -36,14 +36,14 @@ export class AuthService {
 
   async adminSignIn(dto: AdminSignInDto, res: Response) {
     const { username, password } = dto;
-    const admin = await this.adminRepo.findOne({ where: { username } as any });
+    const admin = await this.adminRepo.findOne({ where: { username } });
     if (!admin) throw new BadRequestException('Username or password incorrect');
 
     const isMatchPass = await this.crypto.decrypt(password, admin.password);
     if (!isMatchPass)
       throw new BadRequestException('Username or password incorrect');
 
-    const payload: IToken = { id: admin.id, role: admin.role as any };
+    const payload: IToken = { id: admin.id, role: admin.role };
     const accessToken = await this.token.accessToken(payload);
     const refreshToken = await this.token.refreshToken(payload);
     await this.token.writeCookie(res, 'token', refreshToken, 15);
@@ -126,10 +126,10 @@ export class AuthService {
 
     let user: any = null;
     if (data.role === 'STUDENT')
-      user = await this.studentRepo.findOne({ where: { id: data.id } as any });
+      user = await this.studentRepo.findOne({ where: { id: data.id } });
     else if (data.role === 'TEACHER')
-      user = await this.teacherRepo.findOne({ where: { id: data.id } as any });
-    else user = await this.adminRepo.findOne({ where: { id: data.id } as any });
+      user = await this.teacherRepo.findOne({ where: { id: data.id } });
+    else user = await this.adminRepo.findOne({ where: { id: data.id } });
 
     if (!user) throw new ForbiddenException('User not found');
     return successRes({

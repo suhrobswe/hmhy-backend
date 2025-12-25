@@ -81,7 +81,7 @@ export class TeacherController {
   @Get('google/callback')
   @UseGuards(AuthPassportGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user as any;
+    const googleUser = req.user;
 
     try {
       await this.teacherService.createIncompleteGoogleTeacher({
