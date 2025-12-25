@@ -64,7 +64,6 @@ export class TeacherController {
           return res.status(401).json({ error: 'No user found', info });
         }
 
-        console.log(user);
 
         req.logIn(user, (loginErr) => {
           if (loginErr) {
@@ -81,7 +80,7 @@ export class TeacherController {
   @Get('google/callback')
   @UseGuards(AuthPassportGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user;
+    const googleUser = req.user as any;
 
     try {
       await this.teacherService.createIncompleteGoogleTeacher({
@@ -123,6 +122,30 @@ export class TeacherController {
   @Post('google/verify-otp')
   async verifyOtp(@Body() body: VerifyOtpDto) {
     return await this.teacherService.verifyAndActivate(body);
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  getMe(@CurrentUser() user: IToken) {
+    return this.teacherService.findOneById(user.id, {
+      select: {
+        id: true,
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    });
   }
 
   @ApiBearerAuth()
@@ -240,30 +263,6 @@ export class TeacherController {
   @Delete('hard-delete/:id')
   hardDelete(@Param('id', ParseUUIDPipe) id: string) {
     return this.teacherService.delete(id);
-  }
-
-  @Get('me')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.TEACHER)
-  getMe(@CurrentUser() user: IToken) {
-    return this.teacherService.findOneById(user.id, {
-      select: {
-        id: true,
-        cardNumber: true,
-        description: true,
-        email: true,
-        fullName: true,
-        phoneNumber: true,
-        experience: true,
-        hourPrice: true,
-        imageUrl: true,
-        level: true,
-        portfolioLink: true,
-        rating: true,
-        specification: true,
-      },
-    });
   }
 
   @ApiBearerAuth()
