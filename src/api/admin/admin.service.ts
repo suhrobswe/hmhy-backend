@@ -85,7 +85,7 @@ export class AdminService
       const existsUsername = await this.adminRepo.findOne({
         where: { username },
       });
-      if (existsUsername && existsUsername.id === id)
+      if (existsUsername && existsUsername.id !== id)
         throw new ConflictException('Username already exists');
     }
 

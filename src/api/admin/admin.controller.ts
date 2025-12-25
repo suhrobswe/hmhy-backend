@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -25,6 +26,7 @@ import { Roles } from 'src/common/enum/index.enum';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import type { IToken } from 'src/infrastructure/token/interface';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
+import { Not } from 'typeorm';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -188,7 +190,12 @@ export class AdminController {
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.delete(id);
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.adminService.findOneById(id, {
+      where: { role: Not(Roles.SUPER_ADMIN) },
+    });
+    if (data) return this.adminService.delete(id);
+
+    throw new NotFoundException('Admin not found');
   }
 }

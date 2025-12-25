@@ -52,7 +52,7 @@ export class AuthService {
 
   async teacherSignIn(dto: TeacherSignInDto, res: Response) {
     const { email, password } = dto;
-    const teacher = await this.teacherRepo.findOne({ where: { email } as any });
+    const teacher = await this.teacherRepo.findOne({ where: { email } });
     const isMatchPass = await this.crypto.decrypt(
       password,
       teacher?.password ?? '',
@@ -61,7 +61,7 @@ export class AuthService {
     if (!teacher || !isMatchPass)
       throw new BadRequestException('Email or password incorrect');
 
-    const payload: IToken = { id: teacher.id, role: teacher.role as any };
+    const payload: IToken = { id: teacher.id, role: teacher.role };
     const accessToken = await this.token.accessToken(payload);
     const refreshToken = await this.token.refreshToken(payload);
     await this.token.writeCookie(res, 'token', refreshToken, 30);
@@ -101,13 +101,13 @@ export class AuthService {
 
     if (!student) throw new UnauthorizedException('Student not registered');
 
-    const payload: IToken = { id: student.id, role: 'STUDENT' as any };
+    const payload: IToken = { id: student.id, role: 'STUDENT' };
     return successRes({ accessToken: await this.token.accessToken(payload) });
   }
 
   async devLogin(studentId: string, res: Response) {
     const student = await this.studentRepo.findOne({
-      where: { id: studentId } as any,
+      where: { id: studentId },
     });
     if (!student) throw new BadRequestException('Student not found');
     const payload: IToken = { id: student.id, role: Roles.STUDENT };

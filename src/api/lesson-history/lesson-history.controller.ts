@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LessonHistoryService } from './lesson-history.service';
 import { AuthGuard } from 'src/common/guard/auth.guard';

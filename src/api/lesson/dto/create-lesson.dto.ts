@@ -14,7 +14,7 @@ import { LessonStatus } from 'src/common/enum/index.enum';
 
 export class CreateLessonDto {
   @ApiProperty({
-    example: 'Matematika 101',
+    example: 'English test',
     description: 'Darsning nomi',
     minLength: 2,
     maxLength: 200,
