@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .success-icon {
+            font-size: 60px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-left: 4px solid #00f2fe;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00f2fe;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ Payment Confirmed!</h1>
+    </div>
+    <div class="content">
+        <div class="success-icon">🎉</div>
+        
+        <h2>Thank you, {{studentName}}!</h2>
+        
+        <p>Your payment has been successfully processed.</p>
+        
+        <div class="amount">{{amount}} so'm</div>
+        
+        <div class="info-box">
+            <p><strong>Transaction ID:</strong> {{transactionId}}</p>
+            {{#if lessonSubject}}
+            <p><strong>📚 Lesson:</strong> {{lessonSubject}}</p>
+            {{/if}}
+            <p><strong>📅 Date:</strong> {{paymentDate}}</p>
+        </div>
+        
+        <p><strong>What's next?</strong></p>
+        <ul>
+            <li>✅ Your payment has been recorded</li>
+            <li>📧 You'll receive lesson details shortly</li>
+            <li>📱 Check your dashboard for updates</li>
+        </ul>
+        
+        <p style="margin-top: 30px;">If you have any questions about this payment, please contact our support team.</p>
+        
+        <p>Best regards,<br><strong>HMHY Education Team</strong></p>
+    </div>
+    <div class="footer">
+        <p>© 2024 HMHY Education. All rights reserved.</p>
+        <p>Keep this email for your records.</p>
+    </div>
+</body>
+</html>
