@@ -123,6 +123,7 @@ export class AdminController {
         id: true,
         phoneNumber: true,
         username: true,
+        role: true
       },
     });
   }
