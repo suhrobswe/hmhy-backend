@@ -29,6 +29,7 @@ import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import { Not } from 'typeorm';
 import { ChangePasswordDto } from '../teacher/dto/change-password.dto';
 import { UpdateTeacherDto } from '../teacher/dto/update-teacher.dto';
+import { stringToBytes } from 'node_modules/uuid/dist/v35';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -92,6 +93,7 @@ export class AdminController {
         id: true,
         phoneNumber: true,
         username: true,
+        role: true,
       },
     });
   }
@@ -123,7 +125,7 @@ export class AdminController {
         id: true,
         phoneNumber: true,
         username: true,
-        role: true
+        role: true,
       },
     });
   }
@@ -158,6 +160,9 @@ export class AdminController {
         id: true,
         phoneNumber: true,
         username: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
