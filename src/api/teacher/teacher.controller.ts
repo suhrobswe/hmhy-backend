@@ -64,7 +64,6 @@ export class TeacherController {
           return res.status(401).json({ error: 'No user found', info });
         }
 
-
         req.logIn(user, (loginErr) => {
           if (loginErr) {
             return res
@@ -166,9 +165,7 @@ export class TeacherController {
   @Get()
   findAll() {
     return this.teacherService.findAll({
-      where: { isActive: true },
       select: {
-        cardNumber: true,
         description: true,
         email: true,
         fullName: true,
@@ -180,6 +177,7 @@ export class TeacherController {
         portfolioLink: true,
         rating: true,
         specification: true,
+        isActive: true,
       },
     });
   }
@@ -217,7 +215,6 @@ export class TeacherController {
     return this.teacherService.findOneById(id, {
       select: {
         id: true,
-        cardNumber: true,
         description: true,
         email: true,
         fullName: true,
@@ -229,7 +226,12 @@ export class TeacherController {
         portfolioLink: true,
         rating: true,
         specification: true,
+        createdAt: true,
+        updatedAt: true,
+        lessons: true,
+        isActive: true,
       },
+      relations: ['lessons'],
     });
   }
 

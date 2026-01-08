@@ -130,6 +130,13 @@ export class AdminController {
     });
   }
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Get('stats')
+  getStats() {
+    return this.adminService.getStats();
+  }
+
   @ApiOperation({ summary: 'Get admin by ID' })
   @ApiResponse({
     status: 200,

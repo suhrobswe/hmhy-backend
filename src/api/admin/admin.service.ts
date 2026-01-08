@@ -17,6 +17,14 @@ import { config } from 'src/config';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { ISuccess } from 'src/infrastructure/pagination/successResponse';
 import { ChangePasswordDto } from '../teacher/dto/change-password.dto';
+import type { StudentRepository } from 'src/core/repository/student.repository';
+import type { LessonRepository } from 'src/core/repository/lesson.repository';
+import type { TeacherRepository } from 'src/core/repository/teacher.repository';
+import type { TeacherPaymentRepository } from 'src/core/repository/teacherPayment.repository';
+import { Student } from 'src/core/entity/student.entity';
+import { Lesson } from 'src/core/entity/lesson.entity';
+import { Teacher } from 'src/core/entity/teacher.entity';
+import { TeacherPayment } from 'src/core/entity/teacherPayment.entity';
 
 @Injectable()
 export class AdminService
@@ -25,6 +33,11 @@ export class AdminService
 {
   constructor(
     @InjectRepository(Admin) private readonly adminRepo: AdminRepository,
+    @InjectRepository(Student) private readonly studentRepo: StudentRepository,
+    @InjectRepository(Lesson) private readonly lessonRepo: LessonRepository,
+    @InjectRepository(Teacher) private readonly teacherRepo: TeacherRepository,
+    @InjectRepository(TeacherPayment)
+    private readonly paymentRepo: TeacherPaymentRepository,
     private readonly crypto: CryptoService,
   ) {
     super(adminRepo);
@@ -155,5 +168,31 @@ export class AdminService
     await this.adminRepo.update(id, { password: hashedPassword });
 
     return successRes({ message: 'Password successfully changed!' });
+  }
+
+  async getStats() {
+    const [totalStudents, totalTeachers, totalLessons] = await Promise.all([
+      this.studentRepo.count(),
+      this.teacherRepo.count({ where: { isDelete: false } }),
+      this.lessonRepo.count(),
+    ]);
+
+    const payments = await this.paymentRepo.find();
+    const totalRevenue = payments.reduce(
+      (sum, p) => sum + (p.platformAmount || 0),
+      0,
+    );
+
+    const datas = {
+      totalStudents,
+      totalTeachers,
+      totalLessons,
+      totalRevenue,
+      charts: {
+        lessonsByStatus: [],
+      },
+    };
+
+    return successRes(datas);
   }
 }
