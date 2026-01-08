@@ -201,4 +201,34 @@ export class TeacherService extends BaseService<
 
     return successRes({ message: 'Password successfully changed!' });
   }
+
+  async updateTeacherForAdmin(
+    id: string,
+    dto: UpdateTeacherDto,
+  ): Promise<ISuccess> {
+    const { phoneNumber, cardNumber } = dto;
+
+    const teacher = await this.teacherRepo.findOne({ where: { id } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    if (phoneNumber) {
+      const existsPhoneNumber = await this.teacherRepo.findOne({
+        where: { phoneNumber },
+      });
+      if (existsPhoneNumber && existsPhoneNumber.id !== id)
+        throw new ConflictException('Phone number aready exists');
+    }
+
+    if (cardNumber) {
+      const existsCardNumber = await this.teacherRepo.findOne({
+        where: { phoneNumber },
+      });
+      if (existsCardNumber && existsCardNumber.id !== id)
+        throw new ConflictException('Phone number aready exists');
+    }
+
+    const updatedTeacher = await this.teacherRepo.update(id, dto);
+
+    return successRes(updatedTeacher);
+  }
 }

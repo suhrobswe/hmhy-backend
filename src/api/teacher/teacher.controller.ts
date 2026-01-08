@@ -165,7 +165,9 @@ export class TeacherController {
   @Get()
   findAll() {
     return this.teacherService.findAll({
+      where: { isDelete: false },
       select: {
+        id: true,
         description: true,
         email: true,
         fullName: true,
@@ -178,6 +180,34 @@ export class TeacherController {
         rating: true,
         specification: true,
         isActive: true,
+      },
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @Get('deleted')
+  findAllDeleted() {
+    return this.teacherService.findAll({
+      where: { isDelete: true },
+      select: {
+        id: true,
+        fullName: true,
+        imageUrl: true,
+        deletedBy: true,
+        reasonDelete: true,
+        email: true,
+        phoneNumber: true,
+        level: true,
+        isActive: true,
+        isDelete: true,
+        rating: true,
+        specification: true,
+        hourPrice: true,
+        experience: true,
+        description: true,
+        portfolioLink: true,
       },
     });
   }
@@ -231,7 +261,6 @@ export class TeacherController {
         lessons: true,
         isActive: true,
       },
-      relations: ['lessons'],
     });
   }
 
@@ -241,14 +270,6 @@ export class TeacherController {
   @Patch('activate/:id')
   teacherActivate(@Param('id', ParseUUIDPipe) id: string) {
     return this.teacherService.updateStatus(id);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.SUPER_ADMIN)
-  @Get('deleted')
-  findAllDeleted() {
-    return this.teacherService.findAll({ where: { isDelete: true } });
   }
 
   @ApiBearerAuth()
@@ -265,6 +286,17 @@ export class TeacherController {
   @Delete('hard-delete/:id')
   hardDelete(@Param('id', ParseUUIDPipe) id: string) {
     return this.teacherService.delete(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @Patch(':id')
+  updateForAdmin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTeacherDto,
+  ) {
+    return this.teacherService.updateTeacherForAdmin(id, dto);
   }
 
   @ApiBearerAuth()

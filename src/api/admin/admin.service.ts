@@ -173,7 +173,9 @@ export class AdminService
   async getStats() {
     const [totalStudents, totalTeachers, totalLessons] = await Promise.all([
       this.studentRepo.count(),
-      this.teacherRepo.count({ where: { isDelete: false } }),
+      this.teacherRepo.count({
+        where: { isDelete: false, isActive: true },
+      }),
       this.lessonRepo.count(),
     ]);
 
