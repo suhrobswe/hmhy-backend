@@ -1,5 +1,5 @@
 import { HttpException, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { successRes } from '../response/success.response';
 import {
   IFindOptions,
@@ -48,10 +48,21 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     return successRes({ updateData });
   }
 
+  // base-service.ts yoki admin.service.ts ichida
   async findAllWithPagination(
-    options?: IFindOptions<Entity>,
-  ): Promise<IResponsePagination> {
-    return await RepositoryPager.findAll(this.getRepository, options);
+    options: IFindOptions<Entity> & { search?: string },
+  ) {
+    const { search, ...otherOptions } = options;
+
+    // Agar qidiruv so'rovi bo'lsa, where shartini shakllantiramiz
+    if (search) {
+      otherOptions.where = [
+        { username: ILike(`%${search}%`) },
+        { phoneNumber: ILike(`%${search}%`) },
+      ];
+    }
+
+    return await RepositoryPager.findAll(this.getRepository, otherOptions);
   }
   async findOneBy(options: IFindOptions<Entity>): Promise<ISuccess> {
     const data = (await this.repository.findOne({

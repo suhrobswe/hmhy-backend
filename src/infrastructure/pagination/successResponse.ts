@@ -19,4 +19,13 @@ export interface IResponsePagination extends ISuccess {
   to: number;
 }
 
-export interface IFindOptions<T> extends FindManyOptions<T> {}
+// IFindOptions joylashgan faylda
+export interface IFindOptions<T> {
+  relations?: never[];
+  select?: any;
+  where?: any;
+  order?: any;
+  // Yangi qo'shiladigan qatorlar:
+  page?: number;
+  limit?: number;
+}

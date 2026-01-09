@@ -10,6 +10,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { JwtService } from '@nestjs/jwt';
@@ -29,6 +30,7 @@ import { AuthGuard as AuthPassportGuard } from '@nestjs/passport';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import type { IToken } from 'src/infrastructure/token/interface';
 import passport from 'passport';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @ApiTags('Teacher - Google OAuth')
 @Controller('teacher')
@@ -163,8 +165,10 @@ export class TeacherController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get()
-  findAll() {
-    return this.teacherService.findAll({
+  findAll(@Query() query: PaginationDto) {
+    return this.teacherService.findAllWithPagination({
+      page: query.page,
+      limit: query.limit,
       where: { isDelete: false },
       select: {
         id: true,

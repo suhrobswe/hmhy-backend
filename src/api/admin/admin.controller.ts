@@ -9,6 +9,9 @@ import {
   UseGuards,
   ParseUUIDPipe,
   NotFoundException,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -30,6 +33,7 @@ import { Not } from 'typeorm';
 import { ChangePasswordDto } from '../teacher/dto/change-password.dto';
 import { UpdateTeacherDto } from '../teacher/dto/update-teacher.dto';
 import { stringToBytes } from 'node_modules/uuid/dist/v35';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -87,14 +91,17 @@ export class AdminController {
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN)
   @Get()
-  findAll() {
-    return this.adminService.findAll({
+  findAll(@Query() query: PaginationDto) {
+    return this.adminService.findAllWithPagination({
+      page: query.page,
+      limit: query.limit,
       select: {
         id: true,
         phoneNumber: true,
         username: true,
         role: true,
       },
+      relations: [],
     });
   }
 
@@ -127,6 +134,7 @@ export class AdminController {
         username: true,
         role: true,
       },
+      relations: [],
     });
   }
 
@@ -171,6 +179,7 @@ export class AdminController {
         createdAt: true,
         updatedAt: true,
       },
+      relations: [],
     });
   }
 
@@ -225,6 +234,7 @@ export class AdminController {
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.adminService.findOneById(id, {
       where: { role: Not(Roles.SUPER_ADMIN) },
+      relations: [],
     });
     if (data) return this.adminService.delete(id);
 
