@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Telegraf, Context, Markup } from 'telegraf';
 import { Student } from 'src/core/entity/student.entity';
@@ -260,5 +260,31 @@ export class StudentService extends BaseService<
   async onModuleDestroy() {
     await this.bot.stop();
     this.logger.log('Student registration bot stopped');
+  }
+
+  async getStats() {
+    const [total, active, blocked] = await Promise.all([
+      this.studentRepo.count(),
+      this.studentRepo.count({ where: { isBlocked: false } }),
+      this.studentRepo.count({ where: { isBlocked: true } }),
+    ]);
+
+    return {
+      totalStudents: total,
+      activeStudents: active,
+      blockedStudents: blocked,
+    };
+  }
+
+  async toggleStudentBlock(id: string) {
+    const student = await this.studentRepo.findOne({ where: { id } });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    student.isBlocked = !student.isBlocked;
+
+    return await this.studentRepo.save(student);
   }
 }

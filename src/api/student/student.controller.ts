@@ -67,6 +67,16 @@ export class StudentController {
     });
   }
 
+  @Get('stats')
+  async getStudentStats() {
+    return await this.studentService.getStats();
+  }
+
+  @Post('/block/:id')
+  async blockStudent(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.studentService.toggleStudentBlock(id);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentService.findOneById(id, {
