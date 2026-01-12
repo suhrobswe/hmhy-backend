@@ -172,7 +172,7 @@ export class AdminService
 
   async getStats() {
     const [totalStudents, totalTeachers, totalLessons] = await Promise.all([
-      this.studentRepo.count(),
+      this.studentRepo.count({ where: { isBlocked: false } }),
       this.teacherRepo.count({
         where: { isDelete: false, isActive: true },
       }),
