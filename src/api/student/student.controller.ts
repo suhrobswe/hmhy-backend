@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -19,6 +20,7 @@ import { Roles } from 'src/common/enum/index.enum';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorator/current-user.decorator';
 import type { IToken } from 'src/infrastructure/token/interface';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('student')
 @ApiBearerAuth()
@@ -28,8 +30,11 @@ export class StudentController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
-  findAll() {
-    return this.studentService.findAll({
+  findAll(@Query() query: PaginationDto) {
+    return this.studentService.findAllWithPagination({
+      limit: query.limit,
+      page: query.page,
+
       select: {
         id: true,
         firstName: true,
