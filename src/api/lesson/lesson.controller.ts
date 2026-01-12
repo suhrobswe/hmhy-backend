@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,6 +28,7 @@ import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { LessonStatus, Rating, Roles } from 'src/common/enum/index.enum';
 import { LessonComplete } from './dto/lesson-complete.dto';
+import { LessonFiltersDto } from './dto/lesson-filter.dto';
 @ApiTags('Lessons')
 @ApiBearerAuth()
 @Controller('lessons')
@@ -193,6 +195,16 @@ export class LessonController {
     @CurrentUser() user: IToken,
   ) {
     return this.lessonService.bookLesson(id, user.id);
+  }
+
+  @Get(':id/lessons')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  async getTeacherLessonsAdmin(
+    @Param('id', ParseUUIDPipe) teacherId: string,
+    @Query() query: LessonFiltersDto,
+  ) {
+    return this.lessonService.getTeacherLessonsForAdmin(teacherId, query);
   }
 
   @Patch(':id')

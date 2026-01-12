@@ -24,6 +24,9 @@ import type { LessonHistoryRepository } from 'src/core/repository/lessonHistory.
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { Between, ILike } from 'typeorm';
+import { TeacherFilterDto } from '../teacher/dto/teacher-filter.dto';
+import { LessonFiltersDto } from './dto/lesson-filter.dto';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -336,11 +339,68 @@ export class LessonService extends BaseService<
     });
   }
 
-  async getTeacherLessons(teacherId: string): Promise<Lesson[]> {
-    return await this.lessonRepo.find({
-      where: { teacherId },
-      relations: ['student'],
-      order: { startTime: 'ASC' },
+  async getTeacherLessonsForAdmin(
+    teacherId: string,
+    filters: LessonFiltersDto,
+  ) {
+    const {
+      search,
+      sortBy,
+      sortOrder,
+      status,
+      page = '1',
+      limit = '10',
+    } = filters;
+
+    const teacher = await this.teacherRepo.findOne({
+      where: { id: teacherId },
     });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    const qb = this.lessonRepo
+      .createQueryBuilder('lesson')
+      .leftJoinAndSelect('lesson.student', 'student')
+      .where('lesson.teacherId = :teacherId', { teacherId });
+    if (search) {
+      qb.andWhere('lesson.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (status) {
+      qb.andWhere('lesson.status = :status', { status });
+    }
+
+    if (sortBy) {
+      qb.orderBy(`lesson.${sortBy}`, sortOrder || 'DESC');
+    } else {
+      qb.orderBy('lesson.createdAt', 'DESC');
+    }
+
+    const total = await qb.getCount();
+
+    const lessons = await qb
+      .skip((pageNumber - 1) * limitNumber)
+      .take(limitNumber)
+      .getMany();
+
+    return {
+      statusCode: 200,
+      message: {
+        uz: 'Teacher darslari',
+        en: 'Teacher lessons',
+        ru: 'Уроки преподавателя',
+      },
+      data: lessons,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+      totalElements: total,
+      pageSize: limitNumber,
+      from: (pageNumber - 1) * limitNumber + 1,
+      to: Math.min(pageNumber * limitNumber, total),
+    };
   }
 }

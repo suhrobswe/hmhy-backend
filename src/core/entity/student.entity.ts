@@ -48,7 +48,6 @@ export class Student extends BaseEntity {
 
   @OneToMany(() => Lesson, (lesson) => lesson.student)
   lessons: Lesson[];
-
   @OneToMany(() => Transaction, (transaction) => transaction.student)
   transactions: Transaction[];
 

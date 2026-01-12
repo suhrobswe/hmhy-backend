@@ -84,8 +84,6 @@ export class Teacher extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   experience: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  lessons: string;
   @OneToMany(() => LessonTemplate, (template) => template.teacher, {
     cascade: true,
   })
@@ -97,5 +95,5 @@ export class Teacher extends BaseEntity {
   payments: TeacherPayment[];
 
   @OneToMany(() => Lesson, (lesson) => lesson.teacher, { cascade: true })
-  lessonHistory: Lesson[];
+  lessons: Lesson[];
 }

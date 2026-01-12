@@ -246,13 +246,18 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.teacherService.findOneById(id, {
+    const options: any = {
+      relations: {
+        lessons: {
+          student: true,
+        },
+      },
       select: {
         id: true,
-        description: true,
-        email: true,
         fullName: true,
+        email: true,
         phoneNumber: true,
+        description: true,
         experience: true,
         hourPrice: true,
         imageUrl: true,
@@ -262,10 +267,10 @@ export class TeacherController {
         specification: true,
         createdAt: true,
         updatedAt: true,
-        lessons: true,
         isActive: true,
       },
-    });
+    };
+    return this.teacherService.findOneById(id, options);
   }
 
   @ApiBearerAuth()

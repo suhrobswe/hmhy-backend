@@ -21,6 +21,8 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { EmailService } from 'src/infrastructure/email/email.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { generateOtp } from 'src/common/util/otp-generator';
+import { Between, ILike } from 'typeorm';
+import { TeacherFilterDto } from './dto/teacher-filter.dto';
 
 @Injectable()
 export class TeacherService extends BaseService<
@@ -230,5 +232,58 @@ export class TeacherService extends BaseService<
     const updatedTeacher = await this.teacherRepo.update(id, dto);
 
     return successRes(updatedTeacher);
+  }
+
+  async findFilteredTeachers(query: TeacherFilterDto) {
+    const {
+      search,
+      level,
+      minRating,
+      maxRating,
+      sortBy,
+      sortOrder,
+      page,
+      limit,
+    } = query;
+
+    const where: any = { isActive: true };
+
+    if (search) {
+      where.fullName = ILike(`%${search}%`);
+    }
+
+    if (level) {
+      where.level = level;
+    }
+
+    if (minRating !== undefined && maxRating !== undefined) {
+      where.rating = Between(minRating, maxRating);
+    }
+
+    const options: any = {
+      where,
+      take: limit,
+      skip: page,
+      order: {
+        [sortBy || 'fullName']: sortOrder || 'ASC',
+      },
+      select: {
+        id: true,
+        cardNumber: true,
+        description: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        experience: true,
+        hourPrice: true,
+        imageUrl: true,
+        level: true,
+        portfolioLink: true,
+        rating: true,
+        specification: true,
+      },
+    };
+
+    return this.findAllWithPagination(options);
   }
 }
