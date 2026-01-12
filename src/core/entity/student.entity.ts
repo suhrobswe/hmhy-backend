@@ -32,7 +32,7 @@ export class Student extends BaseEntity {
   blockedAt: Date;
 
   @Column({ type: 'varchar', nullable: true })
-  blockedReason: string;
+  blockedReason: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   lesson: string;
@@ -43,6 +43,9 @@ export class Student extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   notification: string;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  email: string;
+
   @OneToMany(() => Lesson, (lesson) => lesson.student)
   lessons: Lesson[];
 
@@ -51,6 +54,4 @@ export class Student extends BaseEntity {
 
   @OneToMany(() => LessonHistory, (history) => history.student)
   history: LessonHistory[];
-  email: any;
-  length: number;
 }

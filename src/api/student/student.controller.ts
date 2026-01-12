@@ -36,6 +36,13 @@ export class StudentController {
         lastName: true,
         phoneNumber: true,
         tgUsername: true,
+        tgId: true,
+        blockedReason: true,
+        createdAt: true,
+        updatedAt: true,
+        isBlocked: true,
+        email: true,
+
         lessons: {
           id: true,
           name: true,
@@ -57,6 +64,12 @@ export class StudentController {
         lastName: true,
         phoneNumber: true,
         tgUsername: true,
+        tgId: true,
+        createdAt: true,
+        updatedAt: true,
+        email: true,
+        isBlocked: true,
+
         lessons: {
           id: true,
           name: true,
@@ -67,13 +80,24 @@ export class StudentController {
     });
   }
 
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
+    return await this.studentService.update(id, updateStudentDto);
+  }
+
   @Get('stats')
   async getStudentStats() {
     return await this.studentService.getStats();
   }
 
-  @Post('/block/:id')
-  async blockStudent(@Param('id', ParseUUIDPipe) id: string) {
+  @Post('/:id/toggle-block')
+  async blockStudent(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() reason: string,
+  ) {
     return await this.studentService.toggleStudentBlock(id);
   }
 
@@ -83,9 +107,17 @@ export class StudentController {
       select: {
         id: true,
         firstName: true,
+        email: true,
+
         lastName: true,
         phoneNumber: true,
+        isBlocked: true,
+        tgId: true,
+        createdAt: true,
+        updatedAt: true,
         tgUsername: true,
+        blockedReason: true,
+
         lessons: {
           id: true,
           name: true,
