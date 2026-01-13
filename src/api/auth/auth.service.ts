@@ -69,7 +69,12 @@ export class AuthService {
     const accessToken = await this.token.accessToken(payload);
     const refreshToken = await this.token.refreshToken(payload);
     await this.token.writeCookie(res, 'token', refreshToken, 30);
-    return successRes({ accessToken, role: teacher.role });
+    return successRes({
+      accessToken,
+      role: teacher.role,
+      fullName: teacher.fullName,
+      isActive: teacher.isActive,
+    });
   }
 
   async telegramLogin(initData: string) {

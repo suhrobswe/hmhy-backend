@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { JwtService } from '@nestjs/jwt';
-import type { Response, Request } from 'express';
+import type { Response } from 'express';
 import { config } from 'src/config';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SendOtpDto } from './dto/send-otp.dto';
@@ -80,10 +80,18 @@ export class TeacherController {
 
   @Get('google/callback')
   @UseGuards(AuthPassportGuard('google'))
-  async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user as any;
+  async googleCallback(@Req() req, @Res() res: Response) {
+    const googleUser = req.user;
 
     try {
+      const teacher = await this.teacherService.findCompleteGoogleTeacher(
+        googleUser.email,
+      );
+
+      if (teacher) {
+        return res.redirect(`${config.FRONTEND_URL}/login/teacher`);
+      }
+
       await this.teacherService.createIncompleteGoogleTeacher({
         email: googleUser.email,
         fullName: googleUser.fullName,
@@ -93,25 +101,11 @@ export class TeacherController {
         refreshToken: googleUser.refreshToken,
       });
 
-      const teacher = await this.teacherService.findCompleteGoogleTeacher(
-        googleUser.email,
-      );
-
-      if (teacher?.isComplete) {
-        const token = this.jwtService.sign({
-          id: teacher.id,
-          email: teacher.email,
-        });
-        return res.redirect(
-          `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
-        );
-      }
-
-      return res.redirect(
-        `${config.SWAGGER_URL}#/Teacher%20-%20Google%20OAuth/TeacherController_sendOtp`,
-      );
-    } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      const registerUrl = `${config.FRONTEND_URL}/teacher/register?email=${encodeURIComponent(googleUser.email)}`;
+      return res.redirect(registerUrl);
+    } catch (error) {
+      console.error('Google Auth Error:', error);
+      return res.redirect(`${config.FRONTEND_URL}/auth-error`);
     }
   }
 
@@ -121,8 +115,11 @@ export class TeacherController {
   }
 
   @Post('google/verify-otp')
-  async verifyOtp(@Body() body: VerifyOtpDto) {
-    return await this.teacherService.verifyAndActivate(body);
+  async verifyOtp(
+    @Body() body: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return await this.teacherService.verifyAndActivate(body, res);
   }
 
   @Get('me')
@@ -169,7 +166,7 @@ export class TeacherController {
     return this.teacherService.findAllWithPagination({
       page: query.page,
       limit: query.limit,
-      where: { isDelete: false },
+      where: { isDelete: false, isComplete: true },
       select: {
         id: true,
         description: true,
@@ -243,6 +240,22 @@ export class TeacherController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER, 'ID')
+  @Patch('update')
+  update(@CurrentUser() user: IToken, @Body() dto: UpdateTeacherDto) {
+    return this.teacherService.updateTeacher(user.id, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER, 'ID')
+  @Patch('changePassword')
+  changePassword(@CurrentUser() user: IToken, @Body() dto: ChangePasswordDto) {
+    return this.teacherService.changePassword(user.id, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -306,21 +319,5 @@ export class TeacherController {
     @Body() dto: UpdateTeacherDto,
   ) {
     return this.teacherService.updateTeacherForAdmin(id, dto);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.TEACHER)
-  @Patch('update')
-  update(@CurrentUser() user: IToken, @Body() dto: UpdateTeacherDto) {
-    return this.teacherService.updateTeacher(user.id, dto);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.TEACHER)
-  @Patch('changePassword')
-  changePassword(@CurrentUser() user: IToken, @Body() dto: ChangePasswordDto) {
-    return this.teacherService.changePassword(user.id, dto);
   }
 }

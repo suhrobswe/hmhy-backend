@@ -14,7 +14,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import Redis from 'ioredis';
 import { ISuccess } from 'src/infrastructure/pagination/successResponse';
-import { successRes } from 'src/infrastructure/response/success.response';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -23,6 +22,11 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { generateOtp } from 'src/common/util/otp-generator';
 import { Between, ILike } from 'typeorm';
 import { TeacherFilterDto } from './dto/teacher-filter.dto';
+import { IToken } from 'src/infrastructure/token/interface';
+import { TokenService } from 'src/infrastructure/token/Token';
+import { Response } from 'express';
+import { successRes } from 'src/infrastructure/response/success.response';
+import { Roles } from 'src/common/enum/index.enum';
 
 @Injectable()
 export class TeacherService extends BaseService<
@@ -35,6 +39,7 @@ export class TeacherService extends BaseService<
     @InjectRedis() private readonly redis: Redis,
     private readonly mailService: EmailService,
     private readonly crypto: CryptoService,
+    private readonly token: TokenService,
   ) {
     super(teacherRepo);
   }
@@ -100,7 +105,7 @@ export class TeacherService extends BaseService<
     return { message: 'OTP emailingizga yuborildi' };
   }
 
-  async verifyAndActivate(dto: VerifyOtpDto) {
+  async verifyAndActivate(dto: VerifyOtpDto, res: Response) {
     const data = await this.redis.get(`otp:google:${dto.email}`);
     if (!data) throw new BadRequestException('OTP muddati o‘tgan');
 
@@ -116,8 +121,19 @@ export class TeacherService extends BaseService<
 
     await this.redis.del(`otp:google:${dto.email}`);
 
+    const payload: IToken = {
+      id: teacher.id,
+      role: Roles.TEACHER,
+      isActive: false,
+    };
+    const accessToken = await this.token.accessToken(payload);
+    const refreshToken = await this.token.refreshToken(payload);
+    await this.token.writeCookie(res, 'token', refreshToken, 30);
+
     return {
       message: "Ro'yxatdan o'tish yakunlandi",
+      accessToken,
+      role: Roles.TEACHER,
       status: 'Pending Admin Approval',
       teacherId: teacher.id,
     };
