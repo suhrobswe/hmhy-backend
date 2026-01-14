@@ -177,8 +177,6 @@ export class TeacherController {
         hourPrice: true,
         imageUrl: true,
         level: true,
-        googleAccessToken: true,
-        googleRefreshToken: true,
 
         portfolioLink: true,
         rating: true,
@@ -239,6 +237,22 @@ export class TeacherController {
         specification: true,
       },
     });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  @Get('dashboard-stats')
+  getDashboardStats(@CurrentUser() user: IToken) {
+    return this.teacherService.getDashboardStats(user.id);
+  }
+
+  @Get('payments-history')
+  getPaymentsHistory(
+    @CurrentUser() user: IToken,
+    @Query('status') status?: string,
+  ) {
+    return this.teacherService.getPaymentsHistory(user.id, status);
   }
 
   @ApiBearerAuth()

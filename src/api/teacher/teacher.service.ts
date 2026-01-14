@@ -26,7 +26,7 @@ import { IToken } from 'src/infrastructure/token/interface';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { Response } from 'express';
 import { successRes } from 'src/infrastructure/response/success.response';
-import { Roles } from 'src/common/enum/index.enum';
+import { LessonStatus, Roles } from 'src/common/enum/index.enum';
 
 @Injectable()
 export class TeacherService extends BaseService<
@@ -301,5 +301,50 @@ export class TeacherService extends BaseService<
     };
 
     return this.findAllWithPagination(options);
+  }
+
+  async getDashboardStats(teacherId: string) {
+    const teacher = await this.teacherRepo.findOne({
+      where: { id: teacherId },
+      relations: ['lessons'],
+    });
+
+    if (!teacher) throw new NotFoundException('O‘qituvchi topilmadi');
+
+    const stats = {
+      paid: { amount: 0, count: 0 },
+      unpaid: { amount: 0, count: 0 },
+      cancelled: { amount: 0, count: 0 },
+    };
+
+    teacher.lessons.forEach((lesson) => {
+      const price = Number(lesson.price) || 0;
+
+      if (lesson.status === LessonStatus.COMPLETED) {
+        stats.paid.amount += price;
+        stats.paid.count += 1;
+      } else if (lesson.status === LessonStatus.BOOKED) {
+        stats.unpaid.amount += price;
+        stats.unpaid.count += 1;
+      } else if (lesson.status === LessonStatus.CANCELED) {
+        stats.cancelled.amount += price;
+        stats.cancelled.count += 1;
+      }
+    });
+
+    return successRes(stats);
+  }
+
+  async getPaymentsHistory(teacherId: string, status?: string) {
+    const query = this.teacherRepo.manager
+      .createQueryBuilder('teacher_payment', 'payment')
+      .where('payment.teacherId = :teacherId', { teacherId });
+
+    if (status && status !== 'Barchasi') {
+      query.andWhere('payment.status = :status', { status });
+    }
+
+    const history = await query.orderBy('payment.createdAt', 'DESC').getMany();
+    return successRes(history);
   }
 }
