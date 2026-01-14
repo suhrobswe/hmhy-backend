@@ -95,7 +95,9 @@ export class LessonService extends BaseService<
     try {
       const calendar = this.calendarService.getClient(teacher);
 
-      const event = await calendar.events.insert({
+      const event = await (
+        await calendar
+      ).events.insert({
         calendarId: 'primary',
         conferenceDataVersion: 1,
         requestBody: {
@@ -214,7 +216,9 @@ export class LessonService extends BaseService<
       if (lesson.googleEventId && lesson.teacher) {
         const calendar = this.calendarService.getClient(lesson.teacher);
 
-        await calendar.events.patch({
+        await (
+          await calendar
+        ).events.patch({
           calendarId: 'primary',
           eventId: lesson.googleEventId,
           requestBody: {
@@ -263,7 +267,9 @@ export class LessonService extends BaseService<
         try {
           const calendar = this.calendarService.getClient(lesson.teacher);
 
-          await calendar.events.patch({
+          await (
+            await calendar
+          ).events.patch({
             calendarId: 'primary',
             eventId: lesson.googleEventId,
             requestBody: {
@@ -309,7 +315,9 @@ export class LessonService extends BaseService<
     if (lesson.googleEventId && lesson.teacher) {
       try {
         const calendar = this.calendarService.getClient(lesson.teacher);
-        await calendar.events.delete({
+        await (
+          await calendar
+        ).events.delete({
           calendarId: 'primary',
           eventId: lesson.googleEventId,
         });
@@ -402,5 +410,71 @@ export class LessonService extends BaseService<
       from: (pageNumber - 1) * limitNumber + 1,
       to: Math.min(pageNumber * limitNumber, total),
     };
+  }
+
+  async lessonStats(id: string) {
+    const teacher = await this.teacherRepo.findOne({ where: { id } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    const totalLessons = await this.lessonRepo.count({
+      where: { teacherId: id },
+    });
+    const bookedLessons = await this.lessonRepo.count({
+      where: { teacherId: id, status: LessonStatus.BOOKED },
+    });
+
+    const totalPages = Math.ceil(totalLessons / 10) || 0;
+
+    return {
+      totalLessons,
+      bookedLessons,
+      totalPages,
+      currentPage: 1,
+    };
+  }
+
+  async findAllForTeacher(teacherId: string, status?: string, date?: string) {
+    const queryBuilder = this.lessonRepo
+      .createQueryBuilder('lesson')
+      .leftJoin('lesson.student', 'student')
+      .select([
+        'lesson.id',
+        'lesson.name',
+        'lesson.startTime',
+        'lesson.endTime',
+        'lesson.status',
+        'lesson.googleEventId',
+        'lesson.googleMeetUrl',
+        'lesson.price',
+        'student.email',
+        'student.firstName',
+        'student.lastName',
+        'student.phoneNumber',
+        'student.tgUsername',
+      ])
+      .where('lesson.teacherId = :teacherId', { teacherId });
+
+    if (status && status !== 'ALL') {
+      queryBuilder.andWhere('lesson.status = :status', { status });
+    }
+
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+
+      queryBuilder.andWhere('lesson.startTime BETWEEN :start AND :end', {
+        start,
+        end,
+      });
+    }
+
+    const lessons = await queryBuilder
+      .orderBy('lesson.startTime', 'ASC')
+      .getMany();
+
+    return successRes(lessons);
   }
 }

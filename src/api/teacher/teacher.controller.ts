@@ -177,6 +177,9 @@ export class TeacherController {
         hourPrice: true,
         imageUrl: true,
         level: true,
+        googleAccessToken: true,
+        googleRefreshToken: true,
+
         portfolioLink: true,
         rating: true,
         specification: true,

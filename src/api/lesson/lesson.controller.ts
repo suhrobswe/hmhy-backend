@@ -133,27 +133,19 @@ export class LessonController {
     status: 200,
     description: "Bo'sh darslar ro'yxati",
   })
-  findAllForTeacher(@CurrentUser() user: IToken) {
-    return this.lessonService.findAll({
-      where: { teacherId: user.id },
-      select: {
-        id: true,
-        name: true,
-        startTime: true,
-        endTime: true,
-        status: true,
-        googleEventId: true,
-        googleMeetUrl: true,
-        price: true,
-        student: {
-          email: true,
-          firstName: true,
-          lastName: true,
-          phoneNumber: true,
-          tgUsername: true,
-        },
-      },
-    });
+  findAllForTeacher(
+    @CurrentUser() user: IToken,
+    @Query('status') status?: string,
+    @Query('date') date?: string,
+  ) {
+    return this.lessonService.findAllForTeacher(user.id, status, date);
+  }
+
+  @Get('stats')
+  @UseGuards(AuthGuard, RolesGuard)
+  @AccessRoles(Roles.TEACHER)
+  lessonStats(@CurrentUser() user: IToken) {
+    return this.lessonService.lessonStats(user.id);
   }
 
   @Get('my-lessons')
