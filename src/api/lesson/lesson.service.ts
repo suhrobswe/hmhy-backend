@@ -472,7 +472,7 @@ export class LessonService extends BaseService<
     }
 
     const lessons = await queryBuilder
-      .orderBy('lesson.startTime', 'ASC')
+      .orderBy('lesson.startTime', 'DESC')
       .getMany();
 
     return successRes(lessons);

@@ -150,7 +150,7 @@ export class LessonController {
 
   @Get('my-lessons')
   @UseGuards(AuthGuard, RolesGuard)
-  @AccessRoles(Roles.TEACHER)
+  @AccessRoles(Roles.TEACHER, 'ID')
   @ApiOperation({
     summary: 'Mening darslarim (Student)',
     description: "Student o'zi booking qilgan barcha darslarni ko'radi",
