@@ -41,7 +41,7 @@ export class StudentService extends BaseService<
   ) {
     super(studentRepo);
     this.bot = new Telegraf(config.TELEGRAM_BOT_TOKEN);
-    // this.initializeBot();
+    this.initializeBot();
   }
 
   private assertFrom(
