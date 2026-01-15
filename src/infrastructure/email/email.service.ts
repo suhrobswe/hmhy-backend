@@ -141,9 +141,7 @@ export class EmailService {
     }
   }
 
-  /**
-   * Generic email yuborish
-   */
+
   async sendEmail(data: {
     to: string;
     subject: string;
@@ -165,9 +163,6 @@ export class EmailService {
     }
   }
 
-  /**
-   * Bulk email yuborish
-   */
   async sendBulkEmail(data: {
     recipients: string[];
     subject: string;
