@@ -5,7 +5,7 @@ export class PaginationDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1) // <--- This prevents the user from sending 0 or negative numbers
+  @Min(1)
   page?: number = 1;
 
   @IsOptional()
@@ -14,7 +14,7 @@ export class PaginationDto {
   @Min(1)
   limit?: number = 10;
 
-  @IsOptional() // <--- Shuni qo'shish shart
+  @IsOptional()
   @IsString()
   search?: string;
 }

@@ -48,13 +48,11 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     return successRes({ updateData });
   }
 
-  // base-service.ts yoki admin.service.ts ichida
   async findAllWithPagination(
     options: IFindOptions<Entity> & { search?: string },
   ) {
     const { search, ...otherOptions } = options;
 
-    // Agar qidiruv so'rovi bo'lsa, where shartini shakllantiramiz
     if (search) {
       otherOptions.where = [
         { username: ILike(`%${search}%`) },

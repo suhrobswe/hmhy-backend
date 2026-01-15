@@ -71,7 +71,7 @@ export const config: ConfigType = {
   GOOGLE_AUTH: {
     GOOGLE_CALLBACK_URL: isProd
       ? String(process.env.GOOGLE_CALLBACK_URL_SERVER)
-      : String(process.env.GOOGLE_CALLBACK_URL_LOCAL), // .env bilan bir xil bo'lishi kerak
+      : String(process.env.GOOGLE_CALLBACK_URL_LOCAL),
     GOOGLE_CLIENT_ID: String(process.env.GOOGLE_CLIENT_ID),
     GOOGLE_CLIENT_SECRET: String(process.env.GOOGLE_CLIENT_SECRET),
   },

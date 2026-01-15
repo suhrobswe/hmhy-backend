@@ -141,7 +141,6 @@ export class EmailService {
     }
   }
 
-
   async sendEmail(data: {
     to: string;
     subject: string;

@@ -22,13 +22,6 @@ export class GoogleCalendarService {
       refresh_token: teacher.googleRefreshToken,
     });
 
-    oauth2Client.on('tokens', (tokens) => {
-      if (tokens.refresh_token) {
-        console.log('Yangi Refresh Token:', tokens.refresh_token);
-      }
-      console.log('Yangi Access Token:', tokens.access_token);
-    });
-
     return google.calendar({
       version: 'v3',
       auth: oauth2Client,

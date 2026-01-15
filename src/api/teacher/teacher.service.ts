@@ -112,7 +112,6 @@ export class TeacherService extends BaseService<
     const parsed = JSON.parse(data);
     if (parsed.otp !== dto.otp) throw new BadRequestException('OTP noto‘g‘ri');
 
-    // 4. Ustozni faollashtirish
     const teacher = await this.activateTeacher(
       dto.email,
       parsed.phoneNumber,

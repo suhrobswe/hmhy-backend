@@ -9,7 +9,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TeacherSpecification } from 'src/common/enum/index.enum';
 
 export class UpdateTeacherDto {
@@ -21,7 +21,7 @@ export class UpdateTeacherDto {
 
   @ApiPropertyOptional({ example: 'John Doe' })
   @IsString()
-  @IsOptional() // <--- SHU YERDA XATO EDI, MAJBURIY BO'LIB QOLGAN
+  @IsOptional()
   @MinLength(2)
   @MaxLength(100)
   fullName?: string;

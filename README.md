@@ -5,7 +5,7 @@ Help Me Help You (HMHY) is a modern education platform that connects teachers an
 You can explore the live demo here:
 
 🔗 Admin Panel:
-👉 https://abdurazzokov.uz/login/admin
+👉 https://helpmehelpyou.uz
 
 🔐 Demo Credentials (Super Admin):
 

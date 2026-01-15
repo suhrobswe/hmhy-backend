@@ -322,7 +322,6 @@ export class LessonService extends BaseService<
           eventId: lesson.googleEventId,
         });
       } catch (error) {
-        console.error('Failed to delete Google Calendar event:', error.message);
       }
     }
 

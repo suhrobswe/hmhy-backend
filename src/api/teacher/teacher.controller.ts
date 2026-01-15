@@ -40,7 +40,6 @@ export class TeacherController {
     private jwtService: JwtService,
   ) {}
 
-  // Google OAuth endpoints
   @Get('google')
   @ApiOperation({ summary: 'Google OAuth login' })
   googleLogin(@Req() req, @Res() res) {
@@ -104,8 +103,7 @@ export class TeacherController {
       const registerUrl = `${config.FRONTEND_URL}/teacher/register?email=${encodeURIComponent(googleUser.email)}`;
       return res.redirect(registerUrl);
     } catch (error) {
-      console.error('Google Auth Error:', error);
-      return res.redirect(`${config.FRONTEND_URL}/auth-error`);
+      return res.redirect(`${config.FRONTEND_URL}/*`);
     }
   }
 

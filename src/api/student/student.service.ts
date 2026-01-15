@@ -87,7 +87,6 @@ export class StudentService extends BaseService<
       }
     });
 
-    // Text messages
     this.bot.on('text', async (ctx) => {
       try {
         this.assertFrom(ctx);
@@ -130,7 +129,6 @@ export class StudentService extends BaseService<
       }
     });
 
-    // Bot error catcher
     this.bot.catch((err, ctx) => {
       this.logger.error(`Bot error for ${ctx.from?.id}:`, err);
       ctx.reply("Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
@@ -281,7 +279,6 @@ export class StudentService extends BaseService<
       blockedStudents: blocked,
     };
   }
-  // student.service.ts
 
   async toggleStudentBlock(id: string, reason?: string) {
     const student = await this.studentRepo.findOne({ where: { id } });
@@ -291,13 +288,10 @@ export class StudentService extends BaseService<
     }
 
     if (!student.isBlocked) {
-      // Bloklash holati
       student.isBlocked = true;
       student.blockedReason = reason || "Sabab ko'rsatilmadi";
     } else {
-      // Blokdan chiqarish holati
       student.isBlocked = false;
-      student.blockedReason = null; // Type 'null' assignable bo'lishi uchun Entity'da nullable: true bo'lishi shart
     }
 
     return await this.studentRepo.save(student);
@@ -309,17 +303,13 @@ export class StudentService extends BaseService<
   ): Promise<Student> {
     const { phoneNumber, email } = updateStudentDto;
 
-    // 1. Student mavjudligini tekshirish
     const student = await this.studentRepo.findOne({ where: { id } });
     if (!student) {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
-    // 2. Phone Number Unique tekshiruvi
     if (phoneNumber) {
-      const existingPhone = await this.studentRepo.findOne({
-        where: { phoneNumber, id: Not(id) }, // O'zidan boshqa hamma bilan tekshiradi
-      });
+      const existingPhone = await this.studentRepo.findOne({});
       if (existingPhone) {
         throw new ConflictException(
           'Bu telefon raqami allaqachon ro‘yxatdan o‘tgan',
@@ -327,7 +317,6 @@ export class StudentService extends BaseService<
       }
     }
 
-    // 3. Email Unique tekshiruvi (agar entity-da email bo'lsa)
     if (email) {
       const existingEmail = await this.studentRepo.findOne({
         where: { email, id: Not(id) },
@@ -337,7 +326,6 @@ export class StudentService extends BaseService<
       }
     }
 
-    // 4. Ma'lumotlarni yangilash
     Object.assign(student, updateStudentDto);
 
     return await this.studentRepo.save(student);
