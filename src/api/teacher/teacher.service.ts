@@ -102,7 +102,7 @@ export class TeacherService extends BaseService<
       html: this.generateHtmlTemplate(otp),
     });
 
-    return { message: 'OTP emailingizga yuborildi' };
+    return { message: 'OTP emailingizga yuborildi', otp };
   }
 
   async verifyAndActivate(dto: VerifyOtpDto, res: Response) {
